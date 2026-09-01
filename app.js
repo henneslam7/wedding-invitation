@@ -58,8 +58,8 @@
   // per month (11 tears; December is the page left underneath), not a
   // fast text swap.
   const CAL_TIMING = {
-    monthStep: 260, // x11 tears, January through November
-    tearDuration: 520, // must match .cal-pad .cal-page.tearing's transition
+    monthStep: 450, // x11 tears, January through November
+    tearDuration: 700, // must match .cal-pad .cal-page.tearing's transition
     daysRevealDelay: 300, // after the last tear lands (December revealed)
     daysRevealDuration: 450,
     circleDelay: 400, // after the dates are visible

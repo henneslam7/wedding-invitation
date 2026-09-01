@@ -685,7 +685,7 @@ button:focus-visible,
 .cal-page:nth-child(12) { z-index: 1;  transform: translate(0px, 8px)  rotate(0deg); }
 
 .cal-pad .cal-page.tearing {
-  transition: transform 520ms var(--ease-paper), opacity 420ms ease-in 80ms;
+  transition: transform 700ms var(--ease-paper), opacity 550ms ease-in 120ms;
   transform: translate(var(--tear-x, 4px), var(--tear-y, 96px)) rotate(var(--tear-rot, 9deg));
   opacity: 0;
   pointer-events: none;
