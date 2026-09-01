@@ -49,6 +49,18 @@
 
   const REVEAL_STAGGER = 190;
 
+  // Sub-timing (ms) for the mini calendar's own settle → circle → hold →
+  // leave beat, offsets measured from the moment it becomes visible.
+  const CAL_TIMING = {
+    settle: 350,
+    circle: 950,
+    circleDuration: 600,
+    hold: 500,
+    leaveDuration: 450
+  };
+  const CAL_TOTAL_DWELL =
+    CAL_TIMING.circle + CAL_TIMING.circleDuration + CAL_TIMING.hold + CAL_TIMING.leaveDuration;
+
   /* ------------------------------------------------------------
      Helpers
      ------------------------------------------------------------ */
@@ -102,6 +114,7 @@
   const envelopeBack = document.getElementById("envelopeBack");
   const guestNameEl = document.getElementById("guestName");
   const sealBtn = document.getElementById("sealBtn");
+  const calendarIntro = document.getElementById("calendarIntro");
   const letter = document.getElementById("letter");
   const replayBtn = document.getElementById("replayBtn");
   const btnYes = document.getElementById("btnYes");
@@ -232,17 +245,46 @@
     });
   }
 
+  function playCalendarIntro(el) {
+    const scale = prefersReducedMotion ? 0 : 1;
+    const at = (ms) => Math.round(ms * scale);
+
+    clock.after(at(CAL_TIMING.settle), () => el.classList.add("settled"));
+    clock.after(at(CAL_TIMING.circle), () => el.classList.add("circled"));
+    clock.after(at(CAL_TIMING.circle + CAL_TIMING.circleDuration + CAL_TIMING.hold), () => {
+      el.classList.add("leaving");
+    });
+    clock.after(at(CAL_TOTAL_DWELL), () => {
+      // Collapse out of the layout once fully faded, rather than leaving
+      // an empty gap where it used to be — and re-measure, since this is
+      // the only reveal-item whose disappearance actually changes the
+      // letter's rendered height (every other one only toggles opacity,
+      // never display, so it never affects layout).
+      el.style.display = "none";
+      requestAnimationFrame(() => {
+        const height = letter.getBoundingClientRect().height;
+        scene.style.height = `${Math.ceil(height + 40)}px`;
+      });
+    });
+  }
+
   function revealText() {
+    let elapsed = 0;
     revealItems.forEach((el, i) => {
-      const delay = prefersReducedMotion ? 0 : i * REVEAL_STAGGER;
-      clock.after(delay, () => {
+      const isCalendarIntro = el.id === "calendarIntro";
+      const showDelay = prefersReducedMotion ? 0 : elapsed;
+
+      clock.after(showDelay, () => {
         el.classList.add("show");
+        if (isCalendarIntro) playCalendarIntro(el);
         if (i === revealItems.length - 1) {
           sequenceActive = false;
           sequenceDone = true;
           announce("Invitation from Jessica and Hennes: keep Christmas Day, 25 December 2027, for a lunch wedding at Kimpton Tsim Sha Tsui Hong Kong.");
         }
       });
+
+      elapsed += prefersReducedMotion ? 0 : isCalendarIntro ? CAL_TOTAL_DWELL : REVEAL_STAGGER;
     });
   }
 
@@ -271,6 +313,8 @@
     envelopeBack.inert = true;
 
     revealItems.forEach((el) => el.classList.remove("show"));
+    calendarIntro.classList.remove("settled", "circled", "leaving");
+    calendarIntro.style.display = "";
 
     envelopeFront.focus({ preventScroll: true });
     announce("Invitation reset. Tap the envelope to begin again.");
@@ -365,6 +409,32 @@
   }
 
   /* ------------------------------------------------------------
+     Snowfall — sparse, ambient, decorative only
+     ------------------------------------------------------------ */
+
+  function initSnowfall() {
+    if (prefersReducedMotion) return;
+    const container = document.getElementById("snowfall");
+    if (!container) return;
+
+    const FLAKE_COUNT = 16;
+    for (let i = 0; i < FLAKE_COUNT; i++) {
+      const flake = document.createElement("span");
+      flake.className = "snowflake";
+      const duration = 11 + Math.random() * 10; // 11–21s to fall the viewport
+      flake.style.setProperty("--size", `${(2 + Math.random() * 3).toFixed(1)}px`);
+      flake.style.setProperty("--x", `${(Math.random() * 100).toFixed(1)}vw`);
+      flake.style.setProperty("--drift", `${(Math.random() * 60 - 30).toFixed(0)}px`);
+      flake.style.setProperty("--fall-duration", `${duration.toFixed(1)}s`);
+      // Negative delay starts each flake already mid-cycle, at a random
+      // point, so they don't all begin at the top together.
+      flake.style.setProperty("--fall-delay", `${(-Math.random() * duration).toFixed(1)}s`);
+      flake.style.setProperty("--peak-opacity", (0.2 + Math.random() * 0.3).toFixed(2));
+      container.appendChild(flake);
+    }
+  }
+
+  /* ------------------------------------------------------------
      Init
      ------------------------------------------------------------ */
 
@@ -372,6 +442,7 @@
   flipCard.dataset.flap = "closed";
   envelopeBack.inert = true;
   letter.inert = true;
+  initSnowfall();
 
   // With prefers-reduced-motion, the tap-to-flip / tap-to-break steps stay
   // (per the CSS, transitions are forced near-instant) so the guest still

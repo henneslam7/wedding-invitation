@@ -119,6 +119,43 @@ tight crops since they display at a small size (~96px wide) with a `4:5`
 aren't gated behind a preload — a slow-loading photo just pops in a beat
 late rather than blocking the whole sequence.
 
+## Mini calendar reveal
+
+Right after the divider, a small December 2027 calendar card plays its own
+mini sequence before the big "25": it appears, the month label settles in
+with a little pulse, a champagne circle draws itself around the 25 (an SVG
+`stroke-dashoffset` sweep, not a static ring), holds a beat so it registers,
+then fades away — collapsing out of the layout rather than leaving an empty
+gap — and the big "25" takes over from there.
+
+This is its own sub-sequence layered into the normal reveal-item stagger
+(`playCalendarIntro()` / `CAL_TIMING` in `app.js`), not just another item in
+it — it needs roughly 2.5s (settle → circle → hold → fade) where every other
+item just needs `REVEAL_STAGGER` (190ms), so `revealText()` gives it that
+much extra dwell time before advancing to whatever comes next. Its
+disappearance is also the only reveal-item whose exit actually changes the
+letter's rendered height (everything else only ever toggles opacity, never
+layout), so that same moment re-measures and shrinks `scene`'s height to
+match — otherwise the collapse would leave a stale gap the size of the
+calendar card where it used to be.
+
+The date grid is hand-laid-out for December 2027 specifically (Dec 1 is a
+Wednesday) rather than computed — there's only ever one December this
+invitation cares about.
+
+## Snowfall
+
+A sparse, low-opacity drift of small snowflakes across the whole page,
+generated at load (`initSnowfall()` in `app.js`) rather than hand-authored,
+so their size/position/speed/opacity vary enough to read as organic rather
+than a repeating pattern. Deliberately restrained — the creative brief this
+project started from explicitly called out "snowflakes everywhere" and
+"cute Christmas illustration" as things to avoid in favour of a warm,
+editorial-stationery feel over an obvious Christmas-card one — so this is
+tuned to be a faint ambient touch you'd only really notice if you looked,
+not a snow globe. `pointer-events: none` throughout, and skipped entirely
+under `prefers-reduced-motion: reduce`.
+
 ## Before going live
 
 1. ~~Wax seal assets~~ — done, the 5 processed WebP files are in `/assets`.
@@ -146,3 +183,4 @@ late rather than blocking the whole sequence.
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
 - "+ Add to calendar"'s `href` resolves to `webcal://` on iOS/Android and the static `.ics` (with `download` set) on desktop; a real click downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop
+- The mini calendar settles on December, circles the 25th, then collapses cleanly (no gap) before the big "25" appears; replaying resets and replays it correctly the second time; snowflakes stay faint and don't block taps, and disappear entirely under `prefers-reduced-motion: reduce`

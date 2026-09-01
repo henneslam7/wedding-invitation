@@ -93,6 +93,44 @@ button:focus-visible,
   padding: clamp(28px, 8vh, 64px) 18px 56px;
 }
 
+/* ============================================================
+   Snowfall — a sparse, soft ambient touch, not a snow globe.
+   ============================================================ */
+
+.snowfall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.snowflake {
+  position: absolute;
+  top: -12px;
+  left: var(--x, 50%);
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 253, 248, 0.95), rgba(255, 253, 248, 0));
+  opacity: 0;
+  animation:
+    snow-fall var(--fall-duration, 14s) linear var(--fall-delay, 0s) infinite,
+    snow-fade-in 2.4s ease-in var(--fall-delay, 0s) forwards;
+}
+
+@keyframes snow-fall {
+  to {
+    transform: translate(var(--drift, 0px), 112vh);
+  }
+}
+
+@keyframes snow-fade-in {
+  to {
+    opacity: var(--peak-opacity, 0.4);
+  }
+}
+
 .scene {
   position: relative;
   width: 100%;
@@ -102,6 +140,11 @@ button:focus-visible,
      stretch the document's scrollable height with invisible space.
      Switched to visible in app.js the moment the letter actually rises. */
   overflow: hidden;
+  /* Smooths the height shrink once the mini calendar collapses out of the
+     layout later in the sequence. (The initial auto→px grow when the
+     letter rises can't animate — CSS transitions don't tween from/to
+     "auto" — so this only visibly applies to that second, smaller change.) */
+  transition: height 500ms var(--ease-soft);
 }
 
 @media (min-width: 620px) {
@@ -547,6 +590,124 @@ button:focus-visible,
   font-size: 12px;
 }
 
+/* ============================================================
+   Mini calendar — settles on December, circles the date, then
+   hands off to the big "25" reveal.
+   ============================================================ */
+
+.calendar-intro {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 30px;
+  transition: opacity 450ms var(--ease-soft), transform 450ms var(--ease-soft);
+}
+
+.calendar-intro.show.leaving {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.96);
+}
+
+.mini-calendar {
+  width: min(100%, 280px);
+  background: var(--paper);
+  border-radius: 4px;
+  padding: 18px 14px 16px;
+  box-shadow:
+    0 1px 1px rgba(75, 64, 59, 0.08),
+    0 20px 34px -18px rgba(75, 64, 59, 0.4);
+}
+
+.mini-cal-month {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 14px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 500ms var(--ease-soft), transform 500ms var(--ease-soft);
+}
+
+.calendar-intro.settled .mini-cal-month {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mini-cal-month span {
+  color: var(--ink);
+  font-weight: 600;
+  display: inline-block;
+}
+
+.calendar-intro.settled .mini-cal-month span {
+  animation: mini-cal-settle 550ms var(--ease-paper);
+}
+
+@keyframes mini-cal-settle {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 7px;
+  place-items: center;
+}
+
+.mini-cal-dow {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding-bottom: 4px;
+}
+
+.mini-cal-cell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.mini-cal-cell.blank {
+  visibility: hidden;
+}
+
+.mini-cal-target {
+  font-weight: 600;
+}
+
+.mini-cal-circle {
+  position: absolute;
+  inset: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
+  pointer-events: none;
+}
+
+.mini-cal-circle circle {
+  fill: none;
+  stroke: var(--champagne);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 113;
+  stroke-dashoffset: 113;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 600ms var(--ease-soft);
+}
+
+.calendar-intro.circled .mini-cal-circle circle {
+  stroke-dashoffset: 0;
+}
+
 .big-date {
   font-family: var(--font-display);
   font-weight: 500;
@@ -674,12 +835,20 @@ button:focus-visible,
   .letter,
   .reveal-item,
   .divider-line,
-  .envelope-stage {
+  .calendar-intro,
+  .mini-cal-month,
+  .mini-cal-month span,
+  .mini-cal-circle circle,
+  .envelope-stage,
+  .scene {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
   }
   .flip-hint {
     animation: none;
+  }
+  .snowfall {
+    display: none;
   }
 }
 

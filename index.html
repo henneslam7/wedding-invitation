@@ -26,6 +26,8 @@
 </head>
 <body>
 
+<div class="snowfall" id="snowfall" aria-hidden="true"></div>
+
 <main class="page" id="page">
 
   <div class="scene" id="scene">
@@ -88,45 +90,64 @@
           <span class="divider-line"></span>
         </div>
 
-        <p class="big-date reveal-item" data-reveal="5">25</p>
+        <div class="reveal-item calendar-intro" data-reveal="5" id="calendarIntro" aria-hidden="true">
+          <div class="mini-calendar">
+            <p class="mini-cal-month" id="miniCalMonth"><span>DECEMBER</span> 2027</p>
+            <div class="mini-cal-grid">
+              <span class="mini-cal-dow">S</span><span class="mini-cal-dow">M</span><span class="mini-cal-dow">T</span><span class="mini-cal-dow">W</span><span class="mini-cal-dow">T</span><span class="mini-cal-dow">F</span><span class="mini-cal-dow">S</span>
+              <span class="mini-cal-cell blank"></span><span class="mini-cal-cell blank"></span><span class="mini-cal-cell blank"></span>
+              <span class="mini-cal-cell">1</span><span class="mini-cal-cell">2</span><span class="mini-cal-cell">3</span><span class="mini-cal-cell">4</span>
+              <span class="mini-cal-cell">5</span><span class="mini-cal-cell">6</span><span class="mini-cal-cell">7</span><span class="mini-cal-cell">8</span><span class="mini-cal-cell">9</span><span class="mini-cal-cell">10</span><span class="mini-cal-cell">11</span>
+              <span class="mini-cal-cell">12</span><span class="mini-cal-cell">13</span><span class="mini-cal-cell">14</span><span class="mini-cal-cell">15</span><span class="mini-cal-cell">16</span><span class="mini-cal-cell">17</span><span class="mini-cal-cell">18</span>
+              <span class="mini-cal-cell">19</span><span class="mini-cal-cell">20</span><span class="mini-cal-cell">21</span><span class="mini-cal-cell">22</span><span class="mini-cal-cell">23</span><span class="mini-cal-cell">24</span>
+              <span class="mini-cal-cell mini-cal-target" id="calTargetCell">
+                25
+                <svg class="mini-cal-circle" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18"/></svg>
+              </span>
+              <span class="mini-cal-cell">26</span><span class="mini-cal-cell">27</span><span class="mini-cal-cell">28</span><span class="mini-cal-cell">29</span><span class="mini-cal-cell">30</span><span class="mini-cal-cell">31</span><span class="mini-cal-cell blank"></span>
+            </div>
+          </div>
+        </div>
 
-        <p class="date-meta reveal-item" data-reveal="6">
+        <p class="big-date reveal-item" data-reveal="6">25</p>
+
+        <p class="date-meta reveal-item" data-reveal="7">
           SATURDAY<br>
           DECEMBER 2027<br>
           LUNCH WEDDING
         </p>
 
-        <p class="venue reveal-item" data-reveal="7">
+        <p class="venue reveal-item" data-reveal="8">
           Kimpton Tsim Sha Tsui Hong Kong<br>
           11 Middle Road, Tsim Sha Tsui<br>
           Kowloon, Hong Kong
         </p>
 
-        <figure class="reveal-item photo-block photo-2" data-reveal="8">
+        <figure class="reveal-item photo-block photo-2" data-reveal="9">
           <img src="/assets/photo-2.webp" alt="Jessica &amp; Hennes" draggable="false">
         </figure>
 
-        <p class="closing reveal-item" data-reveal="9">
+        <p class="closing reveal-item" data-reveal="10">
           Good food, great company,<br>
           a little Christmas sparkle,<br>
           and a day we&rsquo;d love to share with you.
         </p>
 
-        <p class="save-note reveal-item" data-reveal="10">
+        <p class="save-note reveal-item" data-reveal="11">
           For now, just save the date<br>
           and let us know if you think you can make it.
         </p>
 
-        <figure class="reveal-item photo-block photo-3" data-reveal="11">
+        <figure class="reveal-item photo-block photo-3" data-reveal="12">
           <img src="/assets/photo-3.webp" alt="Jessica &amp; Hennes" draggable="false">
         </figure>
 
-        <p class="signoff reveal-item" data-reveal="12">
+        <p class="signoff reveal-item" data-reveal="13">
           Love,<br>
           Jessica &amp; Hennes
         </p>
 
-        <div class="actions reveal-item" data-reveal="13">
+        <div class="actions reveal-item" data-reveal="14">
           <button type="button" class="btn btn-primary" id="btnYes">I&rsquo;ll be there</button>
           <button type="button" class="btn btn-secondary" id="btnNo">I can&rsquo;t make it</button>
           <a class="btn-calendar" id="btnCalendar" href="/assets/wedding-event.ics" download="jessica-hennes-wedding.ics">+ Add to calendar</a>
