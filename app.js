@@ -398,27 +398,27 @@
 
   function addToCalendar() {
     const ua = navigator.userAgent || "";
-    const isIOS =
-      /iP(hone|od|ad)/.test(ua) ||
+    const isMobile =
+      /Android|iP(hone|od|ad)/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isAndroid = /Android/.test(ua);
 
-    if (isIOS) {
-      // Safari opens the native "Add to Calendar" sheet when navigated
-      // straight to a text/calendar blob URL. (A data: URI does the same
-      // thing on Safari, but Chromium blocks top-level navigation to data:
-      // URIs outright as an anti-phishing measure — blob: isn't affected,
-      // so it's the one approach that can't silently fail cross-engine.)
-      window.location.href = buildIcsBlobUrl();
-      return;
-    }
-
-    if (isAndroid) {
+    if (isMobile) {
+      // Google Calendar's web "add event" page is a plain link, so it opens
+      // reliably everywhere — including inside WhatsApp's in-app browser,
+      // where this invitation is actually opened from. (An .ics blob/data
+      // URI can trigger Apple Calendar's native "Add Event" sheet in full
+      // Safari, but that MIME-sniffing handoff is a Safari-the-app feature,
+      // not something in-app WKWebView browsers implement — there it just
+      // silently downloads the file instead, which is what was happening
+      // here. There's no reliable way to detect or work around that from
+      // script, so a plain, always-works link beats a fancier one that
+      // quietly fails for most guests.)
       const win = window.open(buildGoogleCalendarUrl(), "_blank", "noopener");
       if (!win) window.location.href = buildGoogleCalendarUrl();
       return;
     }
 
+    // Desktop: a downloaded .ics is the normal, expected interaction.
     downloadIcsFile();
   }
 

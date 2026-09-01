@@ -63,18 +63,23 @@ detects it as a static site. Every push to `main` triggers a new deployment.
 
 The third, quieter button under the RSVP actions ("+ Add to calendar") adds
 25 December 2027 (all-day) as an event with the venue in the location field.
-It picks the right method per device, no backend needed:
 
-- **iPhone/iPad (Safari)** — navigates to a `text/calendar` blob URL, which
-  Safari opens as its native "Add to Calendar" sheet. (Uses `blob:` rather
-  than `data:` because Chromium blocks top-level navigation to `data:` URIs
-  as an anti-phishing measure; `blob:` isn't affected and Safari handles it
-  the same way.)
-- **Android** — opens a prefilled Google Calendar "add event" link in a new
-  tab.
-- **Desktop / anything else** — downloads a `.ics` file
-  (`jessica-hennes-wedding.ics`) that Google/Apple/Outlook Calendar can all
-  import.
+- **Mobile (iOS or Android)** — opens a prefilled Google Calendar "add
+  event" page in a new tab.
+- **Desktop** — downloads a `.ics` file (`jessica-hennes-wedding.ics`) that
+  Google/Apple/Outlook Calendar can all import.
+
+Mobile used to try triggering Apple Calendar's native "Add Event" sheet via
+a `text/calendar` blob URL on iOS. That handoff is a Safari-the-app
+feature, not something in-app browsers (WhatsApp's included — which is how
+this invitation is actually opened) implement, so instead of the sheet it
+just silently downloaded the file — exactly the "why did it download
+instead of opening" report this was changed to fix. Google Calendar's page
+is a plain link, so it opens reliably everywhere including WhatsApp's
+in-app browser, at the cost of not being the native Apple Calendar sheet
+for guests who happen to be in full Safari. There's no reliable way to
+detect "am I in an in-app browser" from script, so this trades a
+sometimes-nicer result for one that's never silently broken.
 
 Event details live in `CALENDAR_EVENT` near the top of `app.js`.
 
@@ -121,4 +126,4 @@ late rather than blocking the whole sequence.
 - Replay fully resets state; `prefers-reduced-motion: reduce` still reaches a readable end state
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
-- "+ Add to calendar" on iOS/Android/desktop each reach a working add-to-calendar flow
+- "+ Add to calendar" opens Google Calendar (no file download) on iOS and Android, and downloads a valid `.ics` on desktop
