@@ -35,7 +35,10 @@
     "/assets/photo-3.webp"
   ];
 
-  // Sequence timings (ms), matched to the creative brief.
+  // Sequence timings (ms) for the envelope-opening physical animation —
+  // matched to the creative brief. The letter's own content no longer
+  // reveals on a timer (see "Scroll reveal" below): it reveals as the
+  // guest scrolls to it.
   const T = {
     pressed: 0,
     cracked: 160,
@@ -43,23 +46,26 @@
     falling: 700,
     flapOpen: 1100,
     letterRise: 1780,
-    envelopeHide: 2600,
-    textReveal: 2950
+    envelopeHide: 2600
   };
 
-  const REVEAL_STAGGER = 190;
+  const CAL_MONTHS = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+  ];
 
-  // Sub-timing (ms) for the mini calendar's own settle → circle → hold →
-  // leave beat, offsets measured from the moment it becomes visible.
+  // Sub-timing (ms) for the mini calendar's own flip-through-the-months →
+  // reveal the dates → circle → hold → leave beat, offsets measured from
+  // the moment it scrolls into view.
   const CAL_TIMING = {
-    settle: 350,
-    circle: 950,
+    monthStep: 85, // x12 months, January through December
+    daysRevealDelay: 250, // after the month flip lands on December
+    daysRevealDuration: 420,
+    circleDelay: 350, // after the dates are visible
     circleDuration: 600,
     hold: 500,
     leaveDuration: 450
   };
-  const CAL_TOTAL_DWELL =
-    CAL_TIMING.circle + CAL_TIMING.circleDuration + CAL_TIMING.hold + CAL_TIMING.leaveDuration;
 
   /* ------------------------------------------------------------
      Helpers
@@ -167,6 +173,8 @@
 
   let sequenceActive = false;
   let sequenceDone = false;
+  let scrollObserver = null;
+  let revealedCount = 0;
   const clock = timers();
 
   function announce(msg) {
@@ -225,10 +233,6 @@
       envelopeStage.dataset.hidden = "true";
       envelopeStage.inert = true;
     });
-
-    clock.after(at(T.textReveal), () => {
-      revealText();
-    });
   }
 
   function riseLetter() {
@@ -243,18 +247,40 @@
       // the comment on the base .scene rule for why it starts clipped.
       scene.style.overflow = "visible";
     });
+
+    // Snow only once the letter is actually out of the envelope, and the
+    // content below reveals itself as the guest scrolls to it, rather
+    // than on a fixed timer.
+    startSnowfall();
+    startScrollReveal();
   }
 
   function playCalendarIntro(el) {
     const scale = prefersReducedMotion ? 0 : 1;
     const at = (ms) => Math.round(ms * scale);
+    const monthLabel = el.querySelector(".mini-cal-month span");
 
-    clock.after(at(CAL_TIMING.settle), () => el.classList.add("settled"));
-    clock.after(at(CAL_TIMING.circle), () => el.classList.add("circled"));
-    clock.after(at(CAL_TIMING.circle + CAL_TIMING.circleDuration + CAL_TIMING.hold), () => {
-      el.classList.add("leaving");
+    // Flip through every month, January to December, landing on the
+    // real one — a beat per month, each with its own little "tick".
+    CAL_MONTHS.forEach((month, i) => {
+      clock.after(at(i * CAL_TIMING.monthStep), () => {
+        monthLabel.textContent = month;
+        monthLabel.classList.remove("tick");
+        void monthLabel.offsetWidth; // restart the animation each tick
+        monthLabel.classList.add("tick");
+      });
     });
-    clock.after(at(CAL_TOTAL_DWELL), () => {
+
+    const monthFlipEnd = CAL_MONTHS.length * CAL_TIMING.monthStep;
+    const daysStart = monthFlipEnd + CAL_TIMING.daysRevealDelay;
+    const circleStart = daysStart + CAL_TIMING.daysRevealDuration + CAL_TIMING.circleDelay;
+    const leaveStart = circleStart + CAL_TIMING.circleDuration + CAL_TIMING.hold;
+    const doneAt = leaveStart + CAL_TIMING.leaveDuration;
+
+    clock.after(at(daysStart), () => el.classList.add("days-shown"));
+    clock.after(at(circleStart), () => el.classList.add("circled"));
+    clock.after(at(leaveStart), () => el.classList.add("leaving"));
+    clock.after(at(doneAt), () => {
       // Collapse out of the layout once fully faded, rather than leaving
       // an empty gap where it used to be — and re-measure, since this is
       // the only reveal-item whose disappearance actually changes the
@@ -268,30 +294,52 @@
     });
   }
 
-  function revealText() {
-    let elapsed = 0;
-    revealItems.forEach((el, i) => {
-      const isCalendarIntro = el.id === "calendarIntro";
-      const showDelay = prefersReducedMotion ? 0 : elapsed;
+  function revealOne(el) {
+    el.classList.add("show");
+    if (el.id === "calendarIntro") playCalendarIntro(el);
+    revealedCount++;
+    if (revealedCount === revealItems.length) {
+      sequenceActive = false;
+      sequenceDone = true;
+      announce("Invitation from Jessica and Hennes: keep Christmas Day, 25 December 2027, for a lunch wedding at Kimpton Tsim Sha Tsui Hong Kong.");
+    }
+  }
 
-      clock.after(showDelay, () => {
-        el.classList.add("show");
-        if (isCalendarIntro) playCalendarIntro(el);
-        if (i === revealItems.length - 1) {
-          sequenceActive = false;
-          sequenceDone = true;
-          announce("Invitation from Jessica and Hennes: keep Christmas Day, 25 December 2027, for a lunch wedding at Kimpton Tsim Sha Tsui Hong Kong.");
-        }
-      });
+  // Content reveals as the guest scrolls to it, instead of on a timer —
+  // each .reveal-item fades in the moment it enters the viewport.
+  function startScrollReveal() {
+    revealedCount = 0;
 
-      elapsed += prefersReducedMotion ? 0 : isCalendarIntro ? CAL_TOTAL_DWELL : REVEAL_STAGGER;
-    });
+    if (prefersReducedMotion) {
+      // Nothing to scroll-gate: get straight to a fully readable state.
+      revealItems.forEach(revealOne);
+      return;
+    }
+
+    if (scrollObserver) scrollObserver.disconnect();
+    scrollObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          scrollObserver.unobserve(entry.target);
+          revealOne(entry.target);
+        });
+      },
+      { threshold: 0.15 }
+    );
+    revealItems.forEach((el) => scrollObserver.observe(el));
   }
 
   function resetSequence() {
     clock.clearAll();
     sequenceActive = false;
     sequenceDone = false;
+    revealedCount = 0;
+    if (scrollObserver) {
+      scrollObserver.disconnect();
+      scrollObserver = null;
+    }
+    clearSnowfall();
 
     flipCard.dataset.flipped = "false";
     flipCard.dataset.flap = "closed";
@@ -313,8 +361,9 @@
     envelopeBack.inert = true;
 
     revealItems.forEach((el) => el.classList.remove("show"));
-    calendarIntro.classList.remove("settled", "circled", "leaving");
+    calendarIntro.classList.remove("days-shown", "circled", "leaving");
     calendarIntro.style.display = "";
+    calendarIntro.querySelector(".mini-cal-month span").textContent = CAL_MONTHS[0];
 
     envelopeFront.focus({ preventScroll: true });
     announce("Invitation reset. Tap the envelope to begin again.");
@@ -409,13 +458,14 @@
   }
 
   /* ------------------------------------------------------------
-     Snowfall — sparse, ambient, decorative only
+     Snowfall — sparse, ambient, decorative only. Starts once the
+     envelope is actually open (see riseLetter()), not on page load.
      ------------------------------------------------------------ */
 
-  function initSnowfall() {
-    if (prefersReducedMotion) return;
-    const container = document.getElementById("snowfall");
-    if (!container) return;
+  const snowfallEl = document.getElementById("snowfall");
+
+  function startSnowfall() {
+    if (prefersReducedMotion || !snowfallEl || snowfallEl.childElementCount) return;
 
     const FLAKE_COUNT = 16;
     for (let i = 0; i < FLAKE_COUNT; i++) {
@@ -430,8 +480,12 @@
       // point, so they don't all begin at the top together.
       flake.style.setProperty("--fall-delay", `${(-Math.random() * duration).toFixed(1)}s`);
       flake.style.setProperty("--peak-opacity", (0.2 + Math.random() * 0.3).toFixed(2));
-      container.appendChild(flake);
+      snowfallEl.appendChild(flake);
     }
+  }
+
+  function clearSnowfall() {
+    if (snowfallEl) snowfallEl.replaceChildren();
   }
 
   /* ------------------------------------------------------------
@@ -442,7 +496,6 @@
   flipCard.dataset.flap = "closed";
   envelopeBack.inert = true;
   letter.inert = true;
-  initSnowfall();
 
   // With prefers-reduced-motion, the tap-to-flip / tap-to-break steps stay
   // (per the CSS, transitions are forced near-instant) so the guest still

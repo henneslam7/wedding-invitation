@@ -624,14 +624,7 @@ button:focus-visible,
   text-transform: uppercase;
   color: var(--muted);
   margin: 0 0 14px;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity 500ms var(--ease-soft), transform 500ms var(--ease-soft);
-}
-
-.calendar-intro.settled .mini-cal-month {
-  opacity: 1;
-  transform: translateY(0);
+  overflow: hidden;
 }
 
 .mini-cal-month span {
@@ -640,14 +633,15 @@ button:focus-visible,
   display: inline-block;
 }
 
-.calendar-intro.settled .mini-cal-month span {
-  animation: mini-cal-settle 550ms var(--ease-paper);
+/* Re-triggered on every month change (January through December) — a
+   quick "tick" down into place, like a flip calendar. */
+.mini-cal-month span.tick {
+  animation: mini-cal-tick 140ms ease-out;
 }
 
-@keyframes mini-cal-settle {
-  0% { transform: scale(0.8); }
-  60% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+@keyframes mini-cal-tick {
+  0% { transform: translateY(-55%); opacity: 0.3; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 .mini-cal-grid {
@@ -655,6 +649,14 @@ button:focus-visible,
   grid-template-columns: repeat(7, 1fr);
   row-gap: 7px;
   place-items: center;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 420ms var(--ease-soft), transform 420ms var(--ease-soft);
+}
+
+.calendar-intro.days-shown .mini-cal-grid {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .mini-cal-dow {
@@ -836,8 +838,8 @@ button:focus-visible,
   .reveal-item,
   .divider-line,
   .calendar-intro,
-  .mini-cal-month,
   .mini-cal-month span,
+  .mini-cal-grid,
   .mini-cal-circle circle,
   .envelope-stage,
   .scene {
