@@ -331,44 +331,38 @@
   /* ------------------------------------------------------------
      Add to calendar
 
-     #btnCalendar is a real <a> (not a JS-driven button) configured below
-     with a plain href before the guest can interact with it, so tapping
-     it is a genuine browser-native navigation rather than a script
-     calling location.href — the two are not equivalent. A handful of
-     iOS in-app browsers (WhatsApp's included) will hand a real link tap
-     on a data: URI to Calendar's "Add Event" interstitial even though
-     they ignore the exact same URI when a script assigns it — the
-     anti-phishing policy some browsers apply to script-driven top-level
-     navigation doesn't apply the same way to a link the guest actually
-     tapped. It's still not guaranteed everywhere (Chrome for iOS in
-     particular enforces its own block regardless of how the navigation
-     started), which is why Android instead gets webcal: — a custom URL
-     scheme has no content to render, so any browser has to hand it to
-     whatever the OS registered for it (Calendar), the same way tel:/
-     mailto: links always escape to the Phone/Mail app.
+     #btnCalendar is a real <a>, configured below with a plain href
+     before the guest can interact with it. On mobile that href becomes
+     webcal://<host>/assets/wedding-event.ics: a custom URL scheme, not a
+     content type, so there's nothing for a browser to render — it has to
+     hand the request to whatever the OS registered for it (Calendar),
+     the same way tel:/mailto: links always escape to the Phone/Mail app
+     regardless of which browser triggered them.
+
+     This used to try a data: URI on iOS first, hoping to land on
+     Calendar's native single-event "Add Event" screen instead of a
+     subscribe prompt. That handoff is a Safari-the-app feature, though —
+     confirmed, by testing a real link tap inside WhatsApp's in-app
+     browser (the way this invitation is normally opened), that it still
+     doesn't apply there. Guests were landing on a downloaded file with
+     no obvious next step instead. webcal: trades "possibly the nicer
+     single-event dialog, sometimes a dead end" for "always the same,
+     working outcome" — worth it on a page most guests reach through an
+     in-app browser rather than full Safari.
      ------------------------------------------------------------ */
 
-  (async () => {
+  {
     const ua = navigator.userAgent || "";
-    const isIOS =
-      /iP(hone|od|ad)/.test(ua) ||
+    const isMobile =
+      /Android|iP(hone|od|ad)/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isAndroid = /Android/.test(ua);
 
-    if (isIOS) {
-      try {
-        const res = await fetch(ICS_PATH);
-        const icsText = await res.text();
-        btnCalendar.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(icsText);
-      } catch (e) {
-        // Leave the default href (the plain .ics file) if the fetch fails.
-      }
-    } else if (isAndroid) {
+    if (isMobile) {
       btnCalendar.href = `webcal://${window.location.host}${ICS_PATH}`;
       btnCalendar.removeAttribute("download");
     }
     // Desktop keeps the plain href + download="..." already set in the HTML.
-  })();
+  }
 
   /* ------------------------------------------------------------
      Init
