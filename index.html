@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jessica &amp; Hennes — 25 December 2027</title>
+<meta name="description" content="Keep Christmas Day for us · 25 December 2027 · Kimpton Tsim Sha Tsui Hong Kong">
+
+<!-- Open Graph / WhatsApp link preview -->
+<meta property="og:title" content="Jessica & Hennes">
+<meta property="og:description" content="Keep Christmas Day for us · 25 December 2027">
+<meta property="og:type" content="website">
+<!-- TODO: replace YOUR-DOMAIN.com once the site is deployed, and add /assets/og-preview.jpg (1200x630) -->
+<meta property="og:image" content="https://YOUR-DOMAIN.com/assets/og-preview.jpg">
+<meta property="og:url" content="https://YOUR-DOMAIN.com/">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<main class="page" id="page">
+
+  <div class="scene" id="scene">
+
+    <!-- ENVELOPE -->
+    <section class="envelope-stage" id="envelopeStage" aria-hidden="false">
+
+      <div class="flip-card" id="flipCard">
+        <div class="flip-card-inner">
+
+          <!-- FRONT -->
+          <button type="button" class="face front" id="envelopeFront" aria-label="Tap to open your invitation">
+            <span class="paper-texture" aria-hidden="true"></span>
+            <span class="front-address">
+              <span class="to-label">To,</span>
+              <span class="guest-name" id="guestName">For you.</span>
+            </span>
+            <span class="flip-hint">tap to turn over</span>
+          </button>
+
+          <!-- BACK -->
+          <div class="face back" id="envelopeBack" aria-hidden="true">
+            <div class="paper-texture" aria-hidden="true"></div>
+            <div class="envelope-body" aria-hidden="true"></div>
+
+            <div class="flap" id="flap">
+              <div class="flap-shadow" aria-hidden="true"></div>
+            </div>
+
+            <button type="button" class="seal-btn" id="sealBtn" aria-label="Break the wax seal to open your invitation">
+              <img class="seal-img seal-full" id="sealFull" src="/assets/seal-full.webp" alt="" draggable="false">
+              <img class="seal-img seal-cracked" id="sealCracked" src="/assets/seal-cracked.webp" alt="" draggable="false">
+              <img class="seal-img frag frag-left" id="fragLeft" src="/assets/seal-frag-left.webp" alt="" draggable="false">
+              <img class="seal-img frag frag-bottom" id="fragBottom" src="/assets/seal-frag-bottom.webp" alt="" draggable="false">
+              <img class="seal-img frag frag-right" id="fragRight" src="/assets/seal-frag-right.webp" alt="" draggable="false">
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- LETTER -->
+    <article class="letter" id="letter" aria-hidden="true">
+      <div class="letter-paper">
+
+        <p class="reveal-item" data-reveal="0">KEEP CHRISTMAS DAY FOR US.</p>
+
+        <h1 class="reveal-item names" data-reveal="1">Jessica<br>&amp; Hennes</h1>
+
+        <p class="reveal-item intro" data-reveal="2">are getting married —<br>and gathering everyone we love for lunch.</p>
+
+        <div class="divider reveal-item" data-reveal="3" aria-hidden="true">
+          <span class="divider-line"></span>
+          <span class="divider-mark">✦</span>
+          <span class="divider-line"></span>
+        </div>
+
+        <p class="big-date reveal-item" data-reveal="4">25</p>
+
+        <p class="date-meta reveal-item" data-reveal="5">
+          SATURDAY<br>
+          DECEMBER 2027<br>
+          LUNCH WEDDING
+        </p>
+
+        <p class="venue reveal-item" data-reveal="6">
+          Kimpton Tsim Sha Tsui Hong Kong<br>
+          11 Middle Road, Tsim Sha Tsui<br>
+          Kowloon, Hong Kong
+        </p>
+
+        <p class="closing reveal-item" data-reveal="7">
+          Good food, great company,<br>
+          a little Christmas sparkle,<br>
+          and a day we&rsquo;d love to share with you.
+        </p>
+
+        <p class="save-note reveal-item" data-reveal="8">
+          For now, just save the date<br>
+          and let us know if you think you can make it.
+        </p>
+
+        <p class="signoff reveal-item" data-reveal="9">
+          Love,<br>
+          Jessica &amp; Hennes
+        </p>
+
+        <div class="actions reveal-item" data-reveal="10">
+          <button type="button" class="btn btn-primary" id="btnYes">I&rsquo;ll be there</button>
+          <button type="button" class="btn btn-secondary" id="btnNo">I can&rsquo;t make it</button>
+        </div>
+
+        <button type="button" class="replay-btn" id="replayBtn" aria-label="Replay the invitation">Replay</button>
+
+      </div>
+    </article>
+
+  </div>
+
+</main>
+
+<div class="sr-live" id="srLive" role="status" aria-live="polite"></div>
+
+<script src="/app.js" defer></script>
+</body>
+</html>
