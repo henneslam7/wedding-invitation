@@ -369,17 +369,6 @@
     return lines.join("\r\n");
   }
 
-  function buildGoogleCalendarUrl() {
-    const params = new URLSearchParams({
-      action: "TEMPLATE",
-      text: CALENDAR_EVENT.title,
-      dates: `${CALENDAR_EVENT.startDate}/${CALENDAR_EVENT.endDate}`,
-      details: CALENDAR_EVENT.description,
-      location: CALENDAR_EVENT.location
-    });
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
-  }
-
   function buildIcsBlobUrl() {
     const blob = new Blob([buildIcs()], { type: "text/calendar;charset=utf-8" });
     return URL.createObjectURL(blob);
@@ -397,28 +386,18 @@
   }
 
   function addToCalendar() {
-    const ua = navigator.userAgent || "";
-    const isMobile =
-      /Android|iP(hone|od|ad)/.test(ua) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    if (isMobile) {
-      // Google Calendar's web "add event" page is a plain link, so it opens
-      // reliably everywhere — including inside WhatsApp's in-app browser,
-      // where this invitation is actually opened from. (An .ics blob/data
-      // URI can trigger Apple Calendar's native "Add Event" sheet in full
-      // Safari, but that MIME-sniffing handoff is a Safari-the-app feature,
-      // not something in-app WKWebView browsers implement — there it just
-      // silently downloads the file instead, which is what was happening
-      // here. There's no reliable way to detect or work around that from
-      // script, so a plain, always-works link beats a fancier one that
-      // quietly fails for most guests.)
-      const win = window.open(buildGoogleCalendarUrl(), "_blank", "noopener");
-      if (!win) window.location.href = buildGoogleCalendarUrl();
-      return;
-    }
-
-    // Desktop: a downloaded .ics is the normal, expected interaction.
+    // A downloaded .ics is what actually reaches each guest's own default
+    // calendar app (Apple Calendar on iPhone, whatever's registered as the
+    // system calendar on Android) — a Google Calendar web link doesn't,
+    // it's Google's own page instead. On Android this reliably ends with
+    // an "Open" action on the download notification that hands the file
+    // straight to the default calendar app. On iOS it opens the native
+    // "Add Event" sheet directly in full Safari; inside an in-app browser
+    // (WhatsApp's included, which is how this invitation is normally
+    // opened) that handoff isn't available to script at all — there it
+    // saves to Files instead, and tapping the saved .ics from Files opens
+    // it in Calendar. Same file, one extra tap in that one environment;
+    // there's no way to detect or route around that from script.
     downloadIcsFile();
   }
 
