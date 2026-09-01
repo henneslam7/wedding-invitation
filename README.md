@@ -4,8 +4,8 @@ A mobile-first, single-page interactive invitation. No build step, no framework 
 plain HTML/CSS/JS, distributed via a personalized WhatsApp link.
 
 ```
-https://YOUR-DOMAIN.com/?to=Alex&side=bride
-https://YOUR-DOMAIN.com/?to=Chris&side=groom
+https://wedding-invitation-jh.vercel.app/?to=Alex&side=bride
+https://wedding-invitation-jh.vercel.app/?to=Chris&side=groom
 ```
 
 `to` is the guest's name (shown on the envelope front). `side` decides whose
@@ -62,8 +62,11 @@ The third, quieter button under the RSVP actions ("+ Add to calendar") adds
 25 December 2027 (all-day) as an event with the venue in the location field.
 It picks the right method per device, no backend needed:
 
-- **iPhone/iPad (Safari)** — navigates to a `text/calendar` data URI, which
-  Safari opens as its native "Add to Calendar" sheet.
+- **iPhone/iPad (Safari)** — navigates to a `text/calendar` blob URL, which
+  Safari opens as its native "Add to Calendar" sheet. (Uses `blob:` rather
+  than `data:` because Chromium blocks top-level navigation to `data:` URIs
+  as an anti-phishing measure; `blob:` isn't affected and Safari handles it
+  the same way.)
 - **Android** — opens a prefilled Google Calendar "add event" link in a new
   tab.
 - **Desktop / anything else** — downloads a `.ics` file
@@ -79,10 +82,9 @@ Event details live in `CALENDAR_EVENT` near the top of `app.js`.
    in `app.js`. Just remember every guest link needs `&side=bride` or
    `&side=groom` (see the top of this file) — without it, the reply can't be
    routed and falls back to "copy the message and send it yourself".
-3. ~~OG preview image~~ — done, `assets/og-preview.jpg` is in place. Still
-   TODO: replace `https://YOUR-DOMAIN.com` in the `<meta property="og:image">`
-   / `og:url` tags in `index.html` with the real deployed domain, so WhatsApp
-   link previews resolve correctly.
+3. ~~OG preview image~~ — done, `assets/og-preview.jpg` is in place and the
+   `og:image` / `og:url` tags in `index.html` point at
+   `https://wedding-invitation-jh.vercel.app/`.
 
 ## Testing checklist
 
