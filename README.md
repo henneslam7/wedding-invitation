@@ -141,20 +141,28 @@ calendar, below.
 ## Mini calendar reveal
 
 Right after the divider, a small calendar card plays its own sequence
-once the guest scrolls to it, before the big "25": a numbered tile flips
-through every month like a real desk flip-calendar — 1, 2, 3 … landing on
-12 — one deliberate physical page-flip per month (`.mini-cal-flip-num`,
-a `rotateX` tile flip, ~260ms/month, so the whole flip takes a bit over
-3s — paced as its own little story beat, not a fast blur); only once it
-lands on 12 does the date grid fade in; then a champagne circle draws
-itself around the 25 (an SVG `stroke-dashoffset` sweep, not a static
-ring); holds a beat so it registers; then fades away — collapsing out of
-the layout rather than leaving an empty gap — and the big "25" takes over
-from there. All timing lives in `CAL_TIMING` / `CAL_MONTH_COUNT` in
-`app.js` (`playCalendarIntro()`), triggered the moment the card's own
-scroll-reveal fires. Each flip's number swaps at the animation's
-midpoint, when the tile is rotated edge-on and briefly invisible — the
-same trick a real split-flap display relies on.
+once the guest scrolls to it, before the big "25": a real 2027 desk
+calendar pad, 12 stacked paper pages (`.cal-pad` / `.cal-page` in
+`index.html`, JAN through DEC), torn off one month at a time — January
+first, then February, and so on — each page flying off at its own
+slightly different angle and speed (randomized `--tear-x` / `--tear-y` /
+`--tear-rot`, matching the same "not identical every time" treatment as
+the wax-seal fragments and the dropping photos) to reveal the page
+underneath, ~260ms/month, so the whole tear-down takes a bit over 3s —
+paced as its own little story beat, not a fast blur. The pages are
+stacked with a slight fanned offset and shadow per `:nth-child` so it
+reads as a real paper pad even before anything moves, and each page has
+a dashed perforation line near its top like a genuine tear-off calendar.
+December is the last page — nothing is torn off it, it's simply what's
+left once the other 11 are gone, then it gets a small settle/pulse
+animation once it's the only page remaining. Only then does the date
+grid fade in; then a champagne circle draws itself around the 25 (an SVG
+`stroke-dashoffset` sweep, not a static ring); holds a beat so it
+registers; then fades away — collapsing out of the layout rather than
+leaving an empty gap — and the big "25" takes over from there. All timing
+lives in `CAL_TIMING` / `CAL_MONTH_COUNT` in `app.js`
+(`playCalendarIntro()`), triggered the moment the card's own
+scroll-reveal fires.
 
 Its disappearance is the only reveal-item whose exit actually changes the
 letter's rendered height (everything else only ever toggles opacity,
@@ -165,10 +173,9 @@ transition so that shrink animates instead of snapping.)
 
 The date grid is hand-laid-out for December 2027 specifically (Dec 1 is a
 Wednesday) rather than computed — there's only ever one December this
-invitation cares about. The flip tile's HTML default is "1" (not 12) so
-that if there's ever a beat between the card appearing and
-`playCalendarIntro()` actually starting, nothing spoils by flashing the
-answer early.
+invitation cares about. Replaying removes the `tearing`/`settled` classes
+from every page so the pad is back to its full, untorn stack for the next
+run.
 
 ## Snowfall
 
@@ -185,6 +192,15 @@ you'd only really notice if you looked, not a snow globe.
 `pointer-events: none` throughout, and skipped entirely under
 `prefers-reduced-motion: reduce`. Replay clears the flakes
 (`clearSnowfall()`) so they regenerate cleanly on the next opening.
+
+A near-white flake on a warm-ivory `--background` is a genuine contrast
+trap — an early version was technically present (correct count, correct
+timing) but essentially invisible on screen. Each flake now has a
+solid-ish white core (`radial-gradient(circle, #FFFFFF 65%, transparent
+100%)`) plus a soft warm-brown halo (`box-shadow`, zero spread so it
+blends from the disc's edge instead of reading as a separate ring) to
+give it an edge against the page — still faint by design, just no longer
+imperceptible.
 
 ## Before going live
 
@@ -213,5 +229,5 @@ you'd only really notice if you looked, not a snow globe.
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
 - "+ Add to calendar"'s `href` resolves to `webcal://` on iOS/Android and the static `.ics` (with `download` set) on desktop; a real click downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop
-- Letter content only reveals as you scroll to it, not on a timer; the mini calendar's numbered tile flips 1→12, only then shows the dates, circles the 25th, then collapses cleanly (no gap) before the big "25" appears; replaying resets the tile to "1" and scroll-observation correctly for a second run
+- Letter content only reveals as you scroll to it, not on a timer; the mini calendar tears off its pages January→November one at a time, December remains and settles, only then shows the dates, circles the 25th, then collapses cleanly (no gap) before the big "25" appears; replaying resets every page to its untorn stacked state and scroll-observation correctly for a second run
 - No snowflakes before the envelope is opened; a fresh set appears once the letter rises, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`

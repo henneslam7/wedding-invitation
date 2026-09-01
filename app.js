@@ -49,17 +49,18 @@
     envelopeHide: 2600
   };
 
-  const CAL_MONTH_COUNT = 12; // January (1) through December (12)
+  const CAL_MONTH_COUNT = 12; // January through December
 
-  // Sub-timing (ms) for the mini calendar's own flip-through-the-months →
+  // Sub-timing (ms) for the mini calendar's own tear-off-the-months →
   // reveal the dates → circle → hold → leave beat, offsets measured from
   // the moment it scrolls into view. Paced deliberately slow, like a
-  // little story rather than a blur — a real desk-calendar page flip per
-  // month, not just a fast text swap.
+  // little story rather than a blur — a page torn off a real desk pad
+  // per month (11 tears; December is the page left underneath), not a
+  // fast text swap.
   const CAL_TIMING = {
-    monthStep: 260, // x12 months, one flip each, January through December
-    flipDuration: 220, // must stay a little under monthStep
-    daysRevealDelay: 300, // after the month flip lands on December
+    monthStep: 260, // x11 tears, January through November
+    tearDuration: 520, // must match .cal-pad .cal-page.tearing's transition
+    daysRevealDelay: 300, // after the last tear lands (December revealed)
     daysRevealDuration: 450,
     circleDelay: 400, // after the dates are visible
     circleDuration: 650,
@@ -258,26 +259,27 @@
   function playCalendarIntro(el) {
     const scale = prefersReducedMotion ? 0 : 1;
     const at = (ms) => Math.round(ms * scale);
-    const flipNum = el.querySelector(".mini-cal-flip-num");
+    const pages = Array.from(el.querySelectorAll(".cal-page"));
+    const finalPage = el.querySelector(".cal-page-final");
 
-    // Flip through every month as a number, 1 through 12, landing on the
-    // real one — a real page-flip per month (paced deliberately slow, as
-    // its own little story beat), not a fast text blur. The number swaps
-    // at the flip's midpoint, when the tile is rotated edge-on and
-    // briefly invisible, same trick a real split-flap display relies on.
-    for (let month = 1; month <= CAL_MONTH_COUNT; month++) {
-      const stepStart = (month - 1) * CAL_TIMING.monthStep;
-      clock.after(at(stepStart), () => {
-        flipNum.classList.remove("flip");
-        void flipNum.offsetWidth; // restart the animation each flip
-        flipNum.classList.add("flip");
-      });
-      clock.after(at(stepStart + CAL_TIMING.flipDuration / 2), () => {
-        flipNum.textContent = month;
+    // Tear off every month but the last, January through November — a
+    // page ripped from a real desk pad per month (paced deliberately
+    // slow, as its own little story beat), each falling away a little
+    // differently (not identical, matching the wax fragments/photos
+    // elsewhere), revealing the page beneath. December is the page left
+    // underneath once the others are gone.
+    for (let i = 0; i < pages.length - 1; i++) {
+      const page = pages[i];
+      clock.after(at(i * CAL_TIMING.monthStep), () => {
+        page.style.setProperty("--tear-x", `${(Math.random() * 36 - 18).toFixed(0)}px`);
+        page.style.setProperty("--tear-y", `${(84 + Math.random() * 28).toFixed(0)}px`);
+        page.style.setProperty("--tear-rot", `${(Math.random() * 20 - 10).toFixed(0)}deg`);
+        page.classList.add("tearing");
       });
     }
 
-    const monthFlipEnd = CAL_MONTH_COUNT * CAL_TIMING.monthStep;
+    const monthFlipEnd = (CAL_MONTH_COUNT - 1) * CAL_TIMING.monthStep + CAL_TIMING.tearDuration;
+    clock.after(at(monthFlipEnd), () => finalPage.classList.add("settled"));
     const daysStart = monthFlipEnd + CAL_TIMING.daysRevealDelay;
     const circleStart = daysStart + CAL_TIMING.daysRevealDuration + CAL_TIMING.circleDelay;
     const leaveStart = circleStart + CAL_TIMING.circleDuration + CAL_TIMING.hold;
@@ -369,7 +371,9 @@
     revealItems.forEach((el) => el.classList.remove("show"));
     calendarIntro.classList.remove("days-shown", "circled", "leaving");
     calendarIntro.style.display = "";
-    calendarIntro.querySelector(".mini-cal-flip-num").textContent = "1";
+    calendarIntro.querySelectorAll(".cal-page").forEach((page) => {
+      page.classList.remove("tearing", "settled");
+    });
 
     envelopeFront.focus({ preventScroll: true });
     announce("Invitation reset. Tap the envelope to begin again.");
@@ -478,14 +482,14 @@
       const flake = document.createElement("span");
       flake.className = "snowflake";
       const duration = 11 + Math.random() * 10; // 11–21s to fall the viewport
-      flake.style.setProperty("--size", `${(2 + Math.random() * 3).toFixed(1)}px`);
+      flake.style.setProperty("--size", `${(3 + Math.random() * 4).toFixed(1)}px`);
       flake.style.setProperty("--x", `${(Math.random() * 100).toFixed(1)}vw`);
       flake.style.setProperty("--drift", `${(Math.random() * 60 - 30).toFixed(0)}px`);
       flake.style.setProperty("--fall-duration", `${duration.toFixed(1)}s`);
       // Negative delay starts each flake already mid-cycle, at a random
       // point, so they don't all begin at the top together.
       flake.style.setProperty("--fall-delay", `${(-Math.random() * duration).toFixed(1)}s`);
-      flake.style.setProperty("--peak-opacity", (0.2 + Math.random() * 0.3).toFixed(2));
+      flake.style.setProperty("--peak-opacity", (0.6 + Math.random() * 0.35).toFixed(2));
       snowfallEl.appendChild(flake);
     }
   }

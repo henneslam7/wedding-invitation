@@ -112,7 +112,14 @@ button:focus-visible,
   width: var(--size, 3px);
   height: var(--size, 3px);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 253, 248, 0.95), rgba(255, 253, 248, 0));
+  background: radial-gradient(circle, #FFFFFF 65%, rgba(255, 255, 255, 0) 100%);
+  /* A near-white flake barely registers against the warm ivory page
+     background on its own — a gradient-edged disc alone all but
+     disappears at this size, so a solid-ish core plus a darker halo
+     (zero spread so it blends from the disc's own edge rather than
+     reading as a separate ring) is what actually gives it an edge to
+     read against, without making it look like a literal dot. */
+  box-shadow: 0 0 2.5px 0 rgba(107, 90, 71, 0.55);
   opacity: 0;
   animation:
     snow-fall var(--fall-duration, 14s) linear var(--fall-delay, 0s) infinite,
@@ -617,41 +624,81 @@ button:focus-visible,
     0 20px 34px -18px rgba(75, 64, 59, 0.4);
 }
 
-.mini-cal-flip {
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 8px;
-  perspective: 340px;
+/* A real tear-off desk-calendar pad: 12 stacked pages, January on top.
+   Each tears away in turn — translate/rotate/fade with the same
+   weighted, no-bounce easing as the wax fragments and falling photos —
+   revealing the page beneath, until December is the one left standing. */
+
+.cal-pad {
+  position: relative;
+  width: 108px;
+  height: 84px;
+  margin: 0 auto 10px;
 }
 
-.mini-cal-flip-num {
+.cal-page {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 100px;
+  height: 74px;
+  background: var(--paper);
+  border: 1px solid var(--envelope-shadow);
+  border-radius: 3px;
+  box-shadow: 0 3px 7px -2px rgba(75, 64, 59, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-  background: var(--paper-secondary);
-  border: 1px solid var(--envelope-shadow);
-  border-radius: 5px;
-  box-shadow: 0 3px 8px -2px rgba(75, 64, 59, 0.3);
+}
+
+.cal-page span {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 30px;
+  font-size: 21px;
+  letter-spacing: 0.1em;
   color: var(--ink);
-  transform-origin: 50% 50%;
 }
 
-/* Re-triggered on every month change, 1 through 12 — a physical page
-   flip (the number itself is swapped at the animation's midpoint, in
-   JS, when the tile is edge-on and briefly invisible). */
-.mini-cal-flip-num.flip {
-  animation: mini-cal-flip-tile 200ms ease-in-out;
+/* A perforated tear line near the top edge, like a real pad. */
+.cal-page::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 6px;
+  right: 6px;
+  border-top: 1.5px dashed var(--champagne-soft);
 }
 
-@keyframes mini-cal-flip-tile {
-  0% { transform: rotateX(0deg); }
-  50% { transform: rotateX(-90deg); }
-  100% { transform: rotateX(0deg); }
+/* Each page sits very slightly offset from the one above, so the stack
+   reads as a pad of paper with real depth rather than one flat card. */
+.cal-page:nth-child(1)  { z-index: 12; transform: translate(0px, 0px)  rotate(0deg); }
+.cal-page:nth-child(2)  { z-index: 11; transform: translate(1px, 1px)  rotate(0.6deg); }
+.cal-page:nth-child(3)  { z-index: 10; transform: translate(-1px, 2px) rotate(-0.5deg); }
+.cal-page:nth-child(4)  { z-index: 9;  transform: translate(2px, 3px)  rotate(0.7deg); }
+.cal-page:nth-child(5)  { z-index: 8;  transform: translate(-1px, 4px) rotate(-0.6deg); }
+.cal-page:nth-child(6)  { z-index: 7;  transform: translate(1px, 4px)  rotate(0.5deg); }
+.cal-page:nth-child(7)  { z-index: 6;  transform: translate(-2px, 5px) rotate(-0.7deg); }
+.cal-page:nth-child(8)  { z-index: 5;  transform: translate(2px, 6px)  rotate(0.6deg); }
+.cal-page:nth-child(9)  { z-index: 4;  transform: translate(-1px, 6px) rotate(-0.5deg); }
+.cal-page:nth-child(10) { z-index: 3;  transform: translate(1px, 7px)  rotate(0.7deg); }
+.cal-page:nth-child(11) { z-index: 2;  transform: translate(-1px, 8px) rotate(-0.4deg); }
+.cal-page:nth-child(12) { z-index: 1;  transform: translate(0px, 8px)  rotate(0deg); }
+
+.cal-pad .cal-page.tearing {
+  transition: transform 520ms var(--ease-paper), opacity 420ms ease-in 80ms;
+  transform: translate(var(--tear-x, 4px), var(--tear-y, 96px)) rotate(var(--tear-rot, 9deg));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cal-page-final.settled {
+  animation: cal-final-settle 420ms var(--ease-paper);
+}
+
+@keyframes cal-final-settle {
+  0% { transform: translate(0, 8px) scale(0.94); }
+  60% { transform: translate(0, 8px) scale(1.05); }
+  100% { transform: translate(0, 8px) scale(1); }
 }
 
 .mini-cal-year {
@@ -856,7 +903,8 @@ button:focus-visible,
   .reveal-item,
   .divider-line,
   .calendar-intro,
-  .mini-cal-flip-num,
+  .cal-page,
+  .cal-page-final,
   .mini-cal-grid,
   .mini-cal-circle circle,
   .envelope-stage,
