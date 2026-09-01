@@ -49,21 +49,21 @@
     envelopeHide: 2600
   };
 
-  const CAL_MONTHS = [
-    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
-  ];
+  const CAL_MONTH_COUNT = 12; // January (1) through December (12)
 
   // Sub-timing (ms) for the mini calendar's own flip-through-the-months →
   // reveal the dates → circle → hold → leave beat, offsets measured from
-  // the moment it scrolls into view.
+  // the moment it scrolls into view. Paced deliberately slow, like a
+  // little story rather than a blur — a real desk-calendar page flip per
+  // month, not just a fast text swap.
   const CAL_TIMING = {
-    monthStep: 85, // x12 months, January through December
-    daysRevealDelay: 250, // after the month flip lands on December
-    daysRevealDuration: 420,
-    circleDelay: 350, // after the dates are visible
-    circleDuration: 600,
-    hold: 500,
+    monthStep: 260, // x12 months, one flip each, January through December
+    flipDuration: 220, // must stay a little under monthStep
+    daysRevealDelay: 300, // after the month flip lands on December
+    daysRevealDuration: 450,
+    circleDelay: 400, // after the dates are visible
+    circleDuration: 650,
+    hold: 600,
     leaveDuration: 450
   };
 
@@ -258,20 +258,26 @@
   function playCalendarIntro(el) {
     const scale = prefersReducedMotion ? 0 : 1;
     const at = (ms) => Math.round(ms * scale);
-    const monthLabel = el.querySelector(".mini-cal-month span");
+    const flipNum = el.querySelector(".mini-cal-flip-num");
 
-    // Flip through every month, January to December, landing on the
-    // real one — a beat per month, each with its own little "tick".
-    CAL_MONTHS.forEach((month, i) => {
-      clock.after(at(i * CAL_TIMING.monthStep), () => {
-        monthLabel.textContent = month;
-        monthLabel.classList.remove("tick");
-        void monthLabel.offsetWidth; // restart the animation each tick
-        monthLabel.classList.add("tick");
+    // Flip through every month as a number, 1 through 12, landing on the
+    // real one — a real page-flip per month (paced deliberately slow, as
+    // its own little story beat), not a fast text blur. The number swaps
+    // at the flip's midpoint, when the tile is rotated edge-on and
+    // briefly invisible, same trick a real split-flap display relies on.
+    for (let month = 1; month <= CAL_MONTH_COUNT; month++) {
+      const stepStart = (month - 1) * CAL_TIMING.monthStep;
+      clock.after(at(stepStart), () => {
+        flipNum.classList.remove("flip");
+        void flipNum.offsetWidth; // restart the animation each flip
+        flipNum.classList.add("flip");
       });
-    });
+      clock.after(at(stepStart + CAL_TIMING.flipDuration / 2), () => {
+        flipNum.textContent = month;
+      });
+    }
 
-    const monthFlipEnd = CAL_MONTHS.length * CAL_TIMING.monthStep;
+    const monthFlipEnd = CAL_MONTH_COUNT * CAL_TIMING.monthStep;
     const daysStart = monthFlipEnd + CAL_TIMING.daysRevealDelay;
     const circleStart = daysStart + CAL_TIMING.daysRevealDuration + CAL_TIMING.circleDelay;
     const leaveStart = circleStart + CAL_TIMING.circleDuration + CAL_TIMING.hold;
@@ -363,7 +369,7 @@
     revealItems.forEach((el) => el.classList.remove("show"));
     calendarIntro.classList.remove("days-shown", "circled", "leaving");
     calendarIntro.style.display = "";
-    calendarIntro.querySelector(".mini-cal-month span").textContent = CAL_MONTHS[0];
+    calendarIntro.querySelector(".mini-cal-flip-num").textContent = "1";
 
     envelopeFront.focus({ preventScroll: true });
     announce("Invitation reset. Tap the envelope to begin again.");

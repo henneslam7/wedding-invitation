@@ -141,15 +141,20 @@ calendar, below.
 ## Mini calendar reveal
 
 Right after the divider, a small calendar card plays its own sequence
-once the guest scrolls to it, before the big "25": it flips through every
-month, January to December, landing on the real one (a quick "tick" per
-month, like an old flip calendar); then the date grid fades in; then a
-champagne circle draws itself around the 25 (an SVG `stroke-dashoffset`
-sweep, not a static ring); holds a beat so it registers; then fades away —
-collapsing out of the layout rather than leaving an empty gap — and the
-big "25" takes over from there. All timing lives in `CAL_TIMING` /
-`CAL_MONTHS` in `app.js` (`playCalendarIntro()`), triggered the moment the
-card's own scroll-reveal fires.
+once the guest scrolls to it, before the big "25": a numbered tile flips
+through every month like a real desk flip-calendar — 1, 2, 3 … landing on
+12 — one deliberate physical page-flip per month (`.mini-cal-flip-num`,
+a `rotateX` tile flip, ~260ms/month, so the whole flip takes a bit over
+3s — paced as its own little story beat, not a fast blur); only once it
+lands on 12 does the date grid fade in; then a champagne circle draws
+itself around the 25 (an SVG `stroke-dashoffset` sweep, not a static
+ring); holds a beat so it registers; then fades away — collapsing out of
+the layout rather than leaving an empty gap — and the big "25" takes over
+from there. All timing lives in `CAL_TIMING` / `CAL_MONTH_COUNT` in
+`app.js` (`playCalendarIntro()`), triggered the moment the card's own
+scroll-reveal fires. Each flip's number swaps at the animation's
+midpoint, when the tile is rotated edge-on and briefly invisible — the
+same trick a real split-flap display relies on.
 
 Its disappearance is the only reveal-item whose exit actually changes the
 letter's rendered height (everything else only ever toggles opacity,
@@ -160,8 +165,8 @@ transition so that shrink animates instead of snapping.)
 
 The date grid is hand-laid-out for December 2027 specifically (Dec 1 is a
 Wednesday) rather than computed — there's only ever one December this
-invitation cares about. The month label's HTML default is "JANUARY" (not
-December) so that if there's ever a beat between the card appearing and
+invitation cares about. The flip tile's HTML default is "1" (not 12) so
+that if there's ever a beat between the card appearing and
 `playCalendarIntro()` actually starting, nothing spoils by flashing the
 answer early.
 
@@ -208,5 +213,5 @@ you'd only really notice if you looked, not a snow globe.
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
 - "+ Add to calendar"'s `href` resolves to `webcal://` on iOS/Android and the static `.ics` (with `download` set) on desktop; a real click downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop
-- Letter content only reveals as you scroll to it, not on a timer; the mini calendar flips January→December, shows the dates, circles the 25th, then collapses cleanly (no gap) before the big "25" appears; replaying resets month/classes and scroll-observation correctly for a second run
+- Letter content only reveals as you scroll to it, not on a timer; the mini calendar's numbered tile flips 1→12, only then shows the dates, circles the 25th, then collapses cleanly (no gap) before the big "25" appears; replaying resets the tile to "1" and scroll-observation correctly for a second run
 - No snowflakes before the envelope is opened; a fresh set appears once the letter rises, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`
