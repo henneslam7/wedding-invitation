@@ -356,17 +356,38 @@ button:focus-visible,
 .seal-full { opacity: 1; }
 
 [data-seal="cracked"] .seal-cracked { opacity: 1; }
-[data-seal="cracked"] .seal-full { opacity: 0; }
+
+[data-seal="cracked"] .seal-full,
+[data-seal="broken"] .seal-full,
+[data-seal="falling"] .seal-full {
+  opacity: 0;
+}
 
 [data-seal="broken"] .seal-cracked,
-[data-seal="falling"] .seal-cracked { opacity: 0; }
-[data-seal="broken"] .frag,
-[data-seal="falling"] .frag { opacity: 1; }
+[data-seal="falling"] .seal-cracked {
+  opacity: 0;
+}
 
 .frag {
+  transform: translate(0, 0) rotate(0deg);
+}
+
+/* The fragments must snap to visible the instant they appear (state
+   "broken") — with no fade-in — because that window is short (well
+   under a normal transition's delay), and a fade-in transition here
+   would still be mid-flight, effectively invisible, when "falling"
+   immediately asks it to fade back out again. */
+[data-seal="broken"] .frag,
+[data-seal="falling"] .frag {
+  opacity: 1;
+  transition: opacity 0ms;
+}
+
+/* Falling: fragments move independently, then fade out partway through. */
+[data-seal="falling"] .frag {
   transition:
     transform 720ms var(--ease-paper),
-    opacity 720ms ease-in 120ms;
+    opacity 620ms ease-in 100ms;
 }
 
 [data-seal="falling"] .frag-left {
