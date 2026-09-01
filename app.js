@@ -15,16 +15,11 @@
 
   const WEDDING_DATE_LABEL = "25 December 2027";
 
-  const CALENDAR_EVENT = {
-    title: "Jessica & Hennes — Wedding Lunch",
-    description:
-      "Jessica & Hennes are getting married — a Christmas Day lunch wedding. Keep 25 December 2027 free!",
-    location:
-      "Kimpton Tsim Sha Tsui Hong Kong, 11 Middle Road, Tsim Sha Tsui, Kowloon, Hong Kong",
-    // All-day event: start date inclusive, end date exclusive.
-    startDate: "20271225",
-    endDate: "20271226"
-  };
+  // Event details for "add to calendar" live in assets/wedding-event.ics
+  // itself (a static file, since there's nothing guest-specific in it) —
+  // see the "Add to calendar" section of README.md for why it's a real
+  // hosted file rather than something generated client-side.
+  const ICS_PATH = "/assets/wedding-event.ics";
 
   const SEAL_ASSETS = [
     "/assets/seal-full.webp",
@@ -334,70 +329,42 @@
   btnNo.addEventListener("click", () => sendRsvp(false));
 
   /* ------------------------------------------------------------
-     Add to calendar (Google Calendar / Apple / Android / desktop)
+     Add to calendar
      ------------------------------------------------------------ */
 
-  function icsEscape(text) {
-    return String(text)
-      .replace(/\\/g, "\\\\")
-      .replace(/;/g, "\\;")
-      .replace(/,/g, "\\,")
-      .replace(/\n/g, "\\n");
-  }
-
-  function icsTimestamp(date) {
-    return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  }
-
-  function buildIcs() {
-    const lines = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//Jessica and Hennes//Wedding Save the Date//EN",
-      "CALSCALE:GREGORIAN",
-      "BEGIN:VEVENT",
-      "UID:jessica-hennes-wedding-20271225@save-the-date",
-      `DTSTAMP:${icsTimestamp(new Date())}`,
-      `DTSTART;VALUE=DATE:${CALENDAR_EVENT.startDate}`,
-      `DTEND;VALUE=DATE:${CALENDAR_EVENT.endDate}`,
-      `SUMMARY:${icsEscape(CALENDAR_EVENT.title)}`,
-      `DESCRIPTION:${icsEscape(CALENDAR_EVENT.description)}`,
-      `LOCATION:${icsEscape(CALENDAR_EVENT.location)}`,
-      "END:VEVENT",
-      "END:VCALENDAR"
-    ];
-    return lines.join("\r\n");
-  }
-
-  function buildIcsBlobUrl() {
-    const blob = new Blob([buildIcs()], { type: "text/calendar;charset=utf-8" });
-    return URL.createObjectURL(blob);
-  }
-
   function downloadIcsFile() {
-    const url = buildIcsBlobUrl();
     const a = document.createElement("a");
-    a.href = url;
+    a.href = ICS_PATH;
     a.download = "jessica-hennes-wedding.ics";
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
   function addToCalendar() {
-    // A downloaded .ics is what actually reaches each guest's own default
-    // calendar app (Apple Calendar on iPhone, whatever's registered as the
-    // system calendar on Android) — a Google Calendar web link doesn't,
-    // it's Google's own page instead. On Android this reliably ends with
-    // an "Open" action on the download notification that hands the file
-    // straight to the default calendar app. On iOS it opens the native
-    // "Add Event" sheet directly in full Safari; inside an in-app browser
-    // (WhatsApp's included, which is how this invitation is normally
-    // opened) that handoff isn't available to script at all — there it
-    // saves to Files instead, and tapping the saved .ics from Files opens
-    // it in Calendar. Same file, one extra tap in that one environment;
-    // there's no way to detect or route around that from script.
+    const ua = navigator.userAgent || "";
+    const isMobile =
+      /Android|iP(hone|od|ad)/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (isMobile) {
+      // webcal: is a custom URL scheme, not a content type — there's
+      // nothing for a browser to render, so it has to hand off to
+      // whatever the OS has registered for it (Calendar, on both iOS and
+      // Android) rather than trying to sniff the response itself. That
+      // handoff happens at the OS level the same way tel:/mailto: links
+      // do, which is why it keeps working inside in-app browsers
+      // (WhatsApp's included) where the data:/blob: MIME-sniffing trick
+      // this used to rely on does not — that one is a Safari-the-app
+      // feature, not something in-app WKWebView browsers implement, so
+      // there it just silently downloaded the file instead of opening it.
+      const webcalUrl = `webcal://${window.location.host}${ICS_PATH}`;
+      window.location.href = webcalUrl;
+      return;
+    }
+
+    // Desktop: a downloaded .ics is the normal, expected interaction —
+    // no calendar app is going to be listening for a webcal: handoff.
     downloadIcsFile();
   }
 

@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Jessica and Hennes//Wedding Save the Date//EN
+CALSCALE:GREGORIAN
+X-WR-CALNAME:Jessica & Hennes — Wedding
+X-WR-CALDESC:Keep Christmas Day for us · 25 December 2027
+BEGIN:VEVENT
+UID:jessica-hennes-wedding-20271225@wedding-invitation-jh.vercel.app
+DTSTAMP:20260901T000000Z
+DTSTART;VALUE=DATE:20271225
+DTEND;VALUE=DATE:20271226
+SUMMARY:Jessica & Hennes — Wedding Lunch
+DESCRIPTION:Jessica & Hennes are getting married — a Christmas Day lunch wedding. Keep 25 December 2027 free!
+LOCATION:Kimpton Tsim Sha Tsui Hong Kong\, 11 Middle Road\, Tsim Sha Tsui\, Kowloon\, Hong Kong
+END:VEVENT
+END:VCALENDAR

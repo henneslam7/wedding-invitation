@@ -29,6 +29,7 @@ assets/
   seal-frag-bottom.webp  bottom curved fragment
   seal-frag-right.webp   right fragment (contains H)
   og-preview.jpg         1200×630 WhatsApp link-preview image
+  wedding-event.ics      static calendar file used by "+ Add to calendar"
   photo-1.webp           TODO — portrait couple photo (set into the letter)
   photo-2.webp           TODO — portrait couple photo
   photo-3.webp           TODO — portrait couple photo
@@ -63,27 +64,35 @@ detects it as a static site. Every push to `main` triggers a new deployment.
 
 The third, quieter button under the RSVP actions ("+ Add to calendar") adds
 25 December 2027 (all-day) as an event with the venue in the location
-field, on every device: it downloads `jessica-hennes-wedding.ics`, which
-each platform then hands to its own calendar app rather than some other
-provider's page — Apple Calendar on iPhone, whatever's set as the default
-on Android.
+field, using `assets/wedding-event.ics` — a real static file, not one
+generated client-side, since the event has nothing guest-specific in it.
 
-- **Android** — the download-complete notification's "Open" action passes
-  the file straight to the default calendar app.
-- **iOS, in full Safari** — navigating to the file directly opens the
-  native "Add Event" sheet without a visible download step.
-- **iOS, inside an in-app browser** (WhatsApp's included, which is how
-  this invitation is normally opened) — WKWebView doesn't expose that
-  handoff to script at all, so it saves to Files instead; tapping the
-  saved file there opens it in Calendar. One extra tap in that one case,
-  but it's still Apple Calendar doing the importing, not a substitute.
+- **Mobile (iOS or Android)** — navigates to `webcal://<host>/assets/wedding-event.ics`.
+  `webcal:` is a custom URL scheme, not a content type, so there's nothing
+  for a browser to render — it has to hand the request to whatever the OS
+  has registered for it (the Calendar app, on both platforms), the same
+  way `tel:`/`mailto:` links always escape to the Phone/Mail app regardless
+  of which browser triggered them. That's *why* this is the approach here:
+  earlier attempts navigated straight to a `.ics` file (as a `blob:` URL,
+  then as this same static file) hoping the browser's MIME-type handling
+  would hand it to Calendar directly — which is what happens in full
+  Safari, but that handoff is a Safari-the-app feature that in-app
+  browsers (WhatsApp's included, which is how this invitation is normally
+  opened) don't implement, so it just silently downloaded the file there
+  instead of opening anything. A custom scheme doesn't have that problem:
+  there's no content to maybe-render, so the OS-level handoff isn't
+  something an embedding browser can opt out of.
+- **Desktop** — downloads `jessica-hennes-wedding.ics`, which is the
+  normal, expected interaction there (no calendar app is listening for a
+  `webcal:` handoff on a desktop OS the way phones do).
 
-There's no way to detect "am I in an in-app browser" from script, so
-there's no way to route around that iOS case — the file itself is what
-guarantees every platform ends up at its own calendar app rather than a
-different provider's website.
-
-Event details live in `CALENDAR_EVENT` near the top of `app.js`.
+One caveat worth knowing: `webcal:` opens Calendar in *subscribe* mode
+rather than the single-event *add* dialog — the guest gets a one-item
+calendar named "Jessica & Hennes — Wedding" (from the file's
+`X-WR-CALNAME`) added to their calendar list, showing the same event,
+rather than that one event merging into their personal calendar. Same
+practical outcome (25 Dec 2027 shows up, blocked out), just via a
+subscription rather than an import.
 
 ## Couple photos
 
@@ -128,4 +137,4 @@ late rather than blocking the whole sequence.
 - Replay fully resets state; `prefers-reduced-motion: reduce` still reaches a readable end state
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
-- "+ Add to calendar" downloads a correctly-named, valid `jessica-hennes-wedding.ics` on iOS, Android, and desktop alike
+- "+ Add to calendar" opens Calendar's subscribe prompt on iOS/Android, and downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop
