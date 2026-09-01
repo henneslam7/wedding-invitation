@@ -96,9 +96,9 @@ button:focus-visible,
   position: relative;
   width: 100%;
   max-width: 420px;
-  /* Clipped while idle so the hidden (opacity:0) letter/photo-bundle —
-     both absolutely positioned and much taller than the closed envelope —
-     don't stretch the document's scrollable height with invisible space.
+  /* Clipped while idle so the hidden (opacity:0) letter — absolutely
+     positioned and much taller than the closed envelope — doesn't
+     stretch the document's scrollable height with invisible space.
      Switched to visible in app.js the moment the letter actually rises. */
   overflow: hidden;
 }
@@ -408,72 +408,12 @@ button:focus-visible,
 }
 
 /* ============================================================
-   Photo bundle — a few prints that fall out alongside the letter
-   ============================================================ */
-
-.photo-bundle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 168px;
-  z-index: 6;
-  pointer-events: none;
-}
-
-.polaroid {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 96px;
-  margin: 0;
-  background: var(--paper);
-  padding: 6px 6px 16px;
-  border-radius: 2px;
-  box-shadow:
-    0 1px 1px rgba(75, 64, 59, 0.1),
-    0 14px 24px -10px rgba(75, 64, 59, 0.45);
-  opacity: 0;
-  transition:
-    transform 680ms var(--ease-paper),
-    opacity 420ms ease-out;
-  transform: translate(-50%, -50%) translate(0, -30px) scale(0.6) rotate(0deg);
-}
-
-.polaroid img {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-  border-radius: 1px;
-}
-
-.photo-bundle[data-dropped="true"] .polaroid {
-  opacity: 1;
-}
-
-.photo-bundle[data-dropped="true"] .polaroid-1 {
-  transform: translate(-50%, -50%) translate(-70px, 6px) rotate(-9deg);
-  z-index: 1;
-  transition-delay: 0ms, 0ms;
-}
-.photo-bundle[data-dropped="true"] .polaroid-2 {
-  transform: translate(-50%, -50%) translate(2px, -8px) rotate(4deg);
-  z-index: 3;
-  transition-delay: 90ms, 90ms;
-}
-.photo-bundle[data-dropped="true"] .polaroid-3 {
-  transform: translate(-50%, -50%) translate(72px, 10px) rotate(11deg);
-  z-index: 2;
-  transition-delay: 180ms, 180ms;
-}
-
-/* ============================================================
    Letter
    ============================================================ */
 
 .letter {
   position: absolute;
-  top: 150px;
+  top: 0;
   left: 0;
   right: 0;
   z-index: 4;
@@ -511,6 +451,49 @@ button:focus-visible,
 .reveal-item.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Photos, set into the letter alongside the message rather than
+   clustered above it. Bigger than the old top cluster, each with its own
+   independent tilt for a candid "tucked in with the card" feel, and a
+   heavier drop-in motion (gravity easing, more travel) than the plain
+   text fades around them. */
+.photo-block {
+  width: clamp(200px, 62vw, 260px);
+  margin: 0 auto 34px;
+  background: var(--paper);
+  padding: 10px 10px 26px;
+  border-radius: 2px;
+  box-shadow:
+    0 1px 1px rgba(75, 64, 59, 0.1),
+    0 20px 34px -16px rgba(75, 64, 59, 0.4);
+}
+
+.photo-block img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 1px;
+  display: block;
+}
+
+.reveal-item.photo-block {
+  opacity: 0;
+  transform: translateY(30px) scale(0.94);
+  transition: opacity 680ms var(--ease-paper), transform 680ms var(--ease-paper);
+}
+
+.reveal-item.photo-block.photo-1.show {
+  opacity: 1;
+  transform: translateY(0) rotate(-3deg) scale(1);
+}
+.reveal-item.photo-block.photo-2.show {
+  opacity: 1;
+  transform: translateY(0) rotate(2.5deg) scale(1);
+}
+.reveal-item.photo-block.photo-3.show {
+  opacity: 1;
+  transform: translateY(0) rotate(-2deg) scale(1);
 }
 
 .letter-paper > p:first-child {
@@ -682,7 +665,6 @@ button:focus-visible,
   .seal-img,
   .frag,
   .letter,
-  .polaroid,
   .reveal-item,
   .divider-line,
   .envelope-stage {

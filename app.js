@@ -47,7 +47,6 @@
     broken: 620,
     falling: 700,
     flapOpen: 1100,
-    photosDrop: 1450,
     letterRise: 1780,
     envelopeHide: 2600,
     textReveal: 2950
@@ -108,7 +107,6 @@
   const envelopeBack = document.getElementById("envelopeBack");
   const guestNameEl = document.getElementById("guestName");
   const sealBtn = document.getElementById("sealBtn");
-  const photoBundle = document.getElementById("photoBundle");
   const letter = document.getElementById("letter");
   const replayBtn = document.getElementById("replayBtn");
   const btnYes = document.getElementById("btnYes");
@@ -211,11 +209,6 @@
       announce("The envelope is opening.");
     });
 
-    clock.after(at(T.photosDrop), () => {
-      photoBundle.dataset.dropped = "true";
-      photoBundle.setAttribute("aria-hidden", "false");
-    });
-
     clock.after(at(T.letterRise), () => {
       riseLetter();
     });
@@ -236,10 +229,7 @@
     letter.inert = false;
 
     requestAnimationFrame(() => {
-      // letter.offsetTop accounts for the space reserved above it for the
-      // photo bundle, so the scene grows to fit both without hard-coding
-      // that reserved height in two places.
-      const height = letter.offsetTop + letter.getBoundingClientRect().height;
+      const height = letter.getBoundingClientRect().height;
       scene.style.height = `${Math.ceil(height + 40)}px`;
       // Un-clip now that the scene has grown to fit the real content — see
       // the comment on the base .scene rule for why it starts clipped.
@@ -275,8 +265,6 @@
     letter.dataset.risen = "false";
     letter.setAttribute("aria-hidden", "true");
     letter.inert = true;
-    photoBundle.dataset.dropped = "false";
-    photoBundle.setAttribute("aria-hidden", "true");
     envelopeStage.dataset.hidden = "false";
     envelopeStage.inert = false;
     scene.style.height = "";
@@ -442,7 +430,6 @@
 
   scene.dataset.seal = "full";
   flipCard.dataset.flap = "closed";
-  photoBundle.dataset.dropped = "false";
   envelopeBack.inert = true;
   letter.inert = true;
 

@@ -29,7 +29,7 @@ assets/
   seal-frag-bottom.webp  bottom curved fragment
   seal-frag-right.webp   right fragment (contains H)
   og-preview.jpg         1200×630 WhatsApp link-preview image
-  photo-1.webp           TODO — portrait couple photo (falls out with the letter)
+  photo-1.webp           TODO — portrait couple photo (set into the letter)
   photo-2.webp           TODO — portrait couple photo
   photo-3.webp           TODO — portrait couple photo
 source-assets/   original uncropped wax-seal/OG artwork (not deployed —
@@ -78,13 +78,15 @@ It picks the right method per device, no backend needed:
 
 Event details live in `CALENDAR_EVENT` near the top of `app.js`.
 
-## Photo bundle
+## Couple photos
 
-Three small portrait photos fall out alongside the letter (like the whole
-thing was a bundle tucked in one envelope), landing in a fanned stack just
-above the letter card. They use the same weighted, no-bounce falling
-physics as the wax fragments, staggered so the three don't move in unison,
-timed to land shortly before the letter itself rises into view.
+Three portrait photos are set into the letter alongside the message —
+after the opening greeting, after the venue, and after the closing note —
+rather than clustered above it. Each is a card-framed photo (~200–260px
+wide) that drops in with its own slight tilt as part of the same
+staggered reveal as the surrounding text, just with more travel and a
+heavier gravity-style easing so it still reads as a distinct "drop" among
+the plainer text fades.
 
 Referenced as `assets/photo-1.webp`, `photo-2.webp`, `photo-3.webp` (see
 `PHOTO_ASSETS` in `app.js`) — portrait orientation, ideally already fairly
@@ -104,9 +106,9 @@ late rather than blocking the whole sequence.
    `og:image` / `og:url` tags in `index.html` point at
    `https://wedding-invitation-jh.vercel.app/`.
 4. **Couple photos** — drop 3 portrait photos into `/assets` as
-   `photo-1.webp` / `photo-2.webp` / `photo-3.webp` (see "Photo bundle"
-   above). Until they're added, the polaroids still fall and land on cue,
-   just showing a broken-image icon in the meantime.
+   `photo-1.webp` / `photo-2.webp` / `photo-3.webp` (see "Couple photos"
+   above). Until they're added, the frames still drop in on cue, just
+   showing a broken-image icon in the meantime.
 
 ## Testing checklist
 
