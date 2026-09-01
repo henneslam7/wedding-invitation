@@ -62,37 +62,55 @@ detects it as a static site. Every push to `main` triggers a new deployment.
 
 ## Add to calendar
 
-The third, quieter button under the RSVP actions ("+ Add to calendar") adds
+The third, quieter link under the RSVP actions ("+ Add to calendar") adds
 25 December 2027 (all-day) as an event with the venue in the location
-field, using `assets/wedding-event.ics` — a real static file, not one
-generated client-side, since the event has nothing guest-specific in it.
+field. Event content lives in `assets/wedding-event.ics` — a real static
+file, not one generated client-side, since there's nothing guest-specific
+in it.
 
-- **Mobile (iOS or Android)** — navigates to `webcal://<host>/assets/wedding-event.ics`.
+`#btnCalendar` is a real `<a>`, not a JS-driven button — app.js sets its
+`href` per platform before the guest can interact with it, but a genuine
+link tap handles the navigation, not a script calling `location.href`.
+That distinction matters here: some iOS in-app browsers (WhatsApp's
+included, which is how this invitation is normally opened) will hand a
+real link tap on a `data:` URI to Calendar's native "Add Event" screen
+even though they silently ignore the exact same URI when a script assigns
+it instead — the anti-phishing policy some browsers apply to
+script-initiated top-level navigation doesn't apply the same way to a
+link the guest actually tapped.
+
+- **iOS** — `href` becomes a `data:text/calendar` URI holding the event
+  (fetched from the static file, then inlined). In full Safari this opens
+  the native single-event "Add Event" screen directly. Chrome for iOS
+  enforces its own block on this regardless of how the tap originated (it
+  isn't just following WebKit's rules — Chrome for iOS is a separate app
+  layered on WebKit, without Safari's UI-level calendar handoff, and with
+  Google's own restrictions on top), so there it — and reportedly some
+  other in-app browsers too — downloads the file instead; from there,
+  opening the download normally still gets it into Calendar, just with an
+  extra manual step.
+- **Android** — `href` becomes `webcal://<host>/assets/wedding-event.ics`.
   `webcal:` is a custom URL scheme, not a content type, so there's nothing
   for a browser to render — it has to hand the request to whatever the OS
-  has registered for it (the Calendar app, on both platforms), the same
-  way `tel:`/`mailto:` links always escape to the Phone/Mail app regardless
-  of which browser triggered them. That's *why* this is the approach here:
-  earlier attempts navigated straight to a `.ics` file (as a `blob:` URL,
-  then as this same static file) hoping the browser's MIME-type handling
-  would hand it to Calendar directly — which is what happens in full
-  Safari, but that handoff is a Safari-the-app feature that in-app
-  browsers (WhatsApp's included, which is how this invitation is normally
-  opened) don't implement, so it just silently downloaded the file there
-  instead of opening anything. A custom scheme doesn't have that problem:
-  there's no content to maybe-render, so the OS-level handoff isn't
-  something an embedding browser can opt out of.
-- **Desktop** — downloads `jessica-hennes-wedding.ics`, which is the
-  normal, expected interaction there (no calendar app is listening for a
-  `webcal:` handoff on a desktop OS the way phones do).
+  registered for it (Calendar), the same way `tel:`/`mailto:` links always
+  escape to the Phone/Mail app regardless of which browser triggered them.
+  This is more reliable than the `data:` approach but opens Calendar in
+  *subscribe* mode rather than the single-event *add* dialog — the guest
+  gets a one-item calendar named "Jessica & Hennes — Wedding" (from the
+  file's `X-WR-CALNAME`) added to their calendar list, rather than that
+  one event merging into their existing calendar. Same practical outcome
+  (25 Dec 2027 shows up, blocked out), just via a subscription.
+- **Desktop** — plain `href` to the static file with `download="..."` set
+  in the HTML (untouched by app.js) — downloads
+  `jessica-hennes-wedding.ics`, the normal, expected interaction there.
 
-One caveat worth knowing: `webcal:` opens Calendar in *subscribe* mode
-rather than the single-event *add* dialog — the guest gets a one-item
-calendar named "Jessica & Hennes — Wedding" (from the file's
-`X-WR-CALNAME`) added to their calendar list, showing the same event,
-rather than that one event merging into their personal calendar. Same
-practical outcome (25 Dec 2027 shows up, blocked out), just via a
-subscription rather than an import.
+There is no single approach that's both a true single-event add *and*
+reliable across every iOS browsing context a guest might open this link
+in — that specific handoff is a Safari-the-app feature, not a general
+WebKit or iOS capability, and there's no way to detect from script which
+browser context is currently running it. This is the best mix of
+"try for the nicer outcome, fail safe everywhere else" available without
+a backend.
 
 ## Couple photos
 
@@ -137,4 +155,4 @@ late rather than blocking the whole sequence.
 - Replay fully resets state; `prefers-reduced-motion: reduce` still reaches a readable end state
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
-- "+ Add to calendar" opens Calendar's subscribe prompt on iOS/Android, and downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop
+- "+ Add to calendar"'s `href` resolves to a `data:` URI on iOS, `webcal://` on Android, and the static `.ics` (with `download` set) on desktop; a real click downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop

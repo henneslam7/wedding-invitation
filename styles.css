@@ -66,6 +66,7 @@ button {
 }
 
 button:focus-visible,
+.btn-calendar:focus-visible,
 .flip-hint:focus-visible {
   outline: 2px solid var(--champagne);
   outline-offset: 3px;
@@ -627,6 +628,9 @@ button:focus-visible,
 }
 
 .btn-calendar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 6px;
   min-height: 44px;
   padding: 0 12px;
@@ -634,6 +638,9 @@ button:focus-visible,
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--champagne);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .replay-btn {

@@ -330,45 +330,45 @@
 
   /* ------------------------------------------------------------
      Add to calendar
+
+     #btnCalendar is a real <a> (not a JS-driven button) configured below
+     with a plain href before the guest can interact with it, so tapping
+     it is a genuine browser-native navigation rather than a script
+     calling location.href — the two are not equivalent. A handful of
+     iOS in-app browsers (WhatsApp's included) will hand a real link tap
+     on a data: URI to Calendar's "Add Event" interstitial even though
+     they ignore the exact same URI when a script assigns it — the
+     anti-phishing policy some browsers apply to script-driven top-level
+     navigation doesn't apply the same way to a link the guest actually
+     tapped. It's still not guaranteed everywhere (Chrome for iOS in
+     particular enforces its own block regardless of how the navigation
+     started), which is why Android instead gets webcal: — a custom URL
+     scheme has no content to render, so any browser has to hand it to
+     whatever the OS registered for it (Calendar), the same way tel:/
+     mailto: links always escape to the Phone/Mail app.
      ------------------------------------------------------------ */
 
-  function downloadIcsFile() {
-    const a = document.createElement("a");
-    a.href = ICS_PATH;
-    a.download = "jessica-hennes-wedding.ics";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
-
-  function addToCalendar() {
+  (async () => {
     const ua = navigator.userAgent || "";
-    const isMobile =
-      /Android|iP(hone|od|ad)/.test(ua) ||
+    const isIOS =
+      /iP(hone|od|ad)/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/.test(ua);
 
-    if (isMobile) {
-      // webcal: is a custom URL scheme, not a content type — there's
-      // nothing for a browser to render, so it has to hand off to
-      // whatever the OS has registered for it (Calendar, on both iOS and
-      // Android) rather than trying to sniff the response itself. That
-      // handoff happens at the OS level the same way tel:/mailto: links
-      // do, which is why it keeps working inside in-app browsers
-      // (WhatsApp's included) where the data:/blob: MIME-sniffing trick
-      // this used to rely on does not — that one is a Safari-the-app
-      // feature, not something in-app WKWebView browsers implement, so
-      // there it just silently downloaded the file instead of opening it.
-      const webcalUrl = `webcal://${window.location.host}${ICS_PATH}`;
-      window.location.href = webcalUrl;
-      return;
+    if (isIOS) {
+      try {
+        const res = await fetch(ICS_PATH);
+        const icsText = await res.text();
+        btnCalendar.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(icsText);
+      } catch (e) {
+        // Leave the default href (the plain .ics file) if the fetch fails.
+      }
+    } else if (isAndroid) {
+      btnCalendar.href = `webcal://${window.location.host}${ICS_PATH}`;
+      btnCalendar.removeAttribute("download");
     }
-
-    // Desktop: a downloaded .ics is the normal, expected interaction —
-    // no calendar app is going to be listening for a webcal: handoff.
-    downloadIcsFile();
-  }
-
-  btnCalendar.addEventListener("click", addToCalendar);
+    // Desktop keeps the plain href + download="..." already set in the HTML.
+  })();
 
   /* ------------------------------------------------------------
      Init
