@@ -96,7 +96,11 @@ button:focus-visible,
   position: relative;
   width: 100%;
   max-width: 420px;
-  overflow: visible;
+  /* Clipped while idle so the hidden (opacity:0) letter/photo-bundle —
+     both absolutely positioned and much taller than the closed envelope —
+     don't stretch the document's scrollable height with invisible space.
+     Switched to visible in app.js the moment the letter actually rises. */
+  overflow: hidden;
 }
 
 @media (min-width: 620px) {
@@ -404,12 +408,72 @@ button:focus-visible,
 }
 
 /* ============================================================
+   Photo bundle — a few prints that fall out alongside the letter
+   ============================================================ */
+
+.photo-bundle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 168px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.polaroid {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 96px;
+  margin: 0;
+  background: var(--paper);
+  padding: 6px 6px 16px;
+  border-radius: 2px;
+  box-shadow:
+    0 1px 1px rgba(75, 64, 59, 0.1),
+    0 14px 24px -10px rgba(75, 64, 59, 0.45);
+  opacity: 0;
+  transition:
+    transform 680ms var(--ease-paper),
+    opacity 420ms ease-out;
+  transform: translate(-50%, -50%) translate(0, -30px) scale(0.6) rotate(0deg);
+}
+
+.polaroid img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 1px;
+}
+
+.photo-bundle[data-dropped="true"] .polaroid {
+  opacity: 1;
+}
+
+.photo-bundle[data-dropped="true"] .polaroid-1 {
+  transform: translate(-50%, -50%) translate(-70px, 6px) rotate(-9deg);
+  z-index: 1;
+  transition-delay: 0ms, 0ms;
+}
+.photo-bundle[data-dropped="true"] .polaroid-2 {
+  transform: translate(-50%, -50%) translate(2px, -8px) rotate(4deg);
+  z-index: 3;
+  transition-delay: 90ms, 90ms;
+}
+.photo-bundle[data-dropped="true"] .polaroid-3 {
+  transform: translate(-50%, -50%) translate(72px, 10px) rotate(11deg);
+  z-index: 2;
+  transition-delay: 180ms, 180ms;
+}
+
+/* ============================================================
    Letter
    ============================================================ */
 
 .letter {
   position: absolute;
-  top: 0;
+  top: 150px;
   left: 0;
   right: 0;
   z-index: 4;
@@ -618,6 +682,7 @@ button:focus-visible,
   .seal-img,
   .frag,
   .letter,
+  .polaroid,
   .reveal-item,
   .divider-line,
   .envelope-stage {

@@ -29,6 +29,9 @@ assets/
   seal-frag-bottom.webp  bottom curved fragment
   seal-frag-right.webp   right fragment (contains H)
   og-preview.jpg         1200×630 WhatsApp link-preview image
+  photo-1.webp           TODO — portrait couple photo (falls out with the letter)
+  photo-2.webp           TODO — portrait couple photo
+  photo-3.webp           TODO — portrait couple photo
 source-assets/   original uncropped wax-seal/OG artwork (not deployed —
                  excluded via .vercelignore; kept for future re-processing)
 vercel.json      static hosting config (clean URLs, asset caching)
@@ -75,6 +78,21 @@ It picks the right method per device, no backend needed:
 
 Event details live in `CALENDAR_EVENT` near the top of `app.js`.
 
+## Photo bundle
+
+Three small portrait photos fall out alongside the letter (like the whole
+thing was a bundle tucked in one envelope), landing in a fanned stack just
+above the letter card. They use the same weighted, no-bounce falling
+physics as the wax fragments, staggered so the three don't move in unison,
+timed to land shortly before the letter itself rises into view.
+
+Referenced as `assets/photo-1.webp`, `photo-2.webp`, `photo-3.webp` (see
+`PHOTO_ASSETS` in `app.js`) — portrait orientation, ideally already fairly
+tight crops since they display at a small size (~96px wide) with a `4:5`
+`object-fit: cover` crop applied on top. Unlike the wax seal assets, these
+aren't gated behind a preload — a slow-loading photo just pops in a beat
+late rather than blocking the whole sequence.
+
 ## Before going live
 
 1. ~~Wax seal assets~~ — done, the 5 processed WebP files are in `/assets`.
@@ -85,6 +103,10 @@ Event details live in `CALENDAR_EVENT` near the top of `app.js`.
 3. ~~OG preview image~~ — done, `assets/og-preview.jpg` is in place and the
    `og:image` / `og:url` tags in `index.html` point at
    `https://wedding-invitation-jh.vercel.app/`.
+4. **Couple photos** — drop 3 portrait photos into `/assets` as
+   `photo-1.webp` / `photo-2.webp` / `photo-3.webp` (see "Photo bundle"
+   above). Until they're added, the polaroids still fall and land on cue,
+   just showing a broken-image icon in the meantime.
 
 ## Testing checklist
 
