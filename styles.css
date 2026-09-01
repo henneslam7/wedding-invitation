@@ -579,6 +579,16 @@ button:focus-visible,
   min-height: 44px;
 }
 
+.btn-calendar {
+  margin-top: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--champagne);
+}
+
 .replay-btn {
   display: none;
   margin: 30px auto 0;
