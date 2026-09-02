@@ -113,30 +113,70 @@ heavier gravity-style easing so it still reads as a distinct "drop" among
 the plainer text fades.
 
 Referenced as `assets/photo-1.webp`, `photo-2.webp`, `photo-3.webp` (see
-`PHOTO_ASSETS` in `app.js`) — portrait orientation, ideally already fairly
-tight crops since they display at a small size (~96px wide) with a `4:5`
-`object-fit: cover` crop applied on top. Unlike the wax seal assets, these
-aren't gated behind a preload — a slow-loading photo just pops in a beat
-late rather than blocking the whole sequence.
+`PHOTO_ASSETS` in `app.js`) — portrait orientation, with a `4:5`
+`object-fit: cover` crop applied on top. Unlike the wax seal assets,
+these aren't gated behind a preload — a slow-loading photo just pops in a
+beat late rather than blocking the whole sequence, and the `4:5`
+`aspect-ratio` means its space is reserved either way, so nothing below
+shifts when it lands.
+
+If a photo is missing or fails, `app.js` swaps its `src` for a blank
+pixel and tags the frame `.photo-missing`, leaving an empty ivory plate
+in place. Hiding the alt text alone isn't enough — most engines still
+draw their broken-image glyph, which is exactly what a half-finished
+invitation should never show.
+
+## Opening the envelope
+
+The seal breaks, the flap folds back, and then the letter is **drawn up
+out of the envelope** rather than cross-faded on top of it.
+
+The trick is z-order, not clipping: `.letter` sits at `z-index: 1`,
+*behind* `.envelope-stage` at `z-index: 2`. While the letter is still
+inside, the envelope's own opaque body is what hides it, and `.scene`'s
+`overflow: hidden` (pinned to the envelope's height at that moment) hides
+everything below. Then the letter translates up 72px while the envelope
+sinks 132px: the two crossing over each other is what reads as the letter
+being pulled clear. Only once it's out does the envelope dissolve —
+fading it any earlier would let the letter show straight through the
+pocket, which is precisely why the earlier cross-fade version never felt
+physical.
+
+The letter no longer scales or fades on the way out either. A letter
+leaving an envelope only translates; the fade was doing most of the work
+of making it feel like a layer rather than an object.
+
+Timings live in `RISE` in `app.js` and must stay in step with the
+transition durations on `.letter` / `.envelope-stage` in `styles.css`.
 
 ## Scroll reveal
 
-Once the letter is out of the envelope, its content no longer reveals
-itself on a fixed timer — each `.reveal-item` fades in as the guest
-actually scrolls it into view (`startScrollReveal()` in `app.js`, an
-`IntersectionObserver` with `threshold: 0.15`, one observer entry per
-item, unobserved once it's fired). Nothing below the fold reveals itself
-before the guest gets there.
+Once the letter is out, its content no longer reveals itself on a fixed
+timer — each `.reveal-item` fades in as the guest actually scrolls it
+into view (`startScrollReveal()` in `app.js`, an `IntersectionObserver`
+with `threshold: 0.15`, one observer entry per item, unobserved once
+it's fired). Nothing below the fold reveals itself before the guest gets
+there.
 
-Under `prefers-reduced-motion: reduce` this is skipped entirely —
+Items that come into view **together** — most obviously the first
+screenful, which an `IntersectionObserver` reports in a single callback
+the moment it starts observing — are spaced out by `queueReveal()`
+rather than all firing on the same frame, so a screenful cascades
+(`REVEAL_GAP`, 135ms) instead of popping in as one block.
+
+Motion weight varies by role rather than being one shared fade: the
+eyebrow barely moves (5px / 980ms), the names take their time (17px /
+1180ms), the closing actions are comparatively brisk (9px / 640ms). The
+uniform 620ms/14px fade the earlier version used on all fifteen items
+flattened exactly the hierarchy the typography works to build.
+
+Under `prefers-reduced-motion: reduce` all of this is skipped —
 scroll-gating motion someone has asked to minimise doesn't help them, so
 every item just shows immediately instead (`revealItems.forEach(revealOne)`).
 
-The scene's height is already fixed to the letter's full rendered height
-the moment it rises (see `riseLetter()`) — reveal-items only ever toggle
-opacity, never `display`, so revealing them as the guest scrolls doesn't
-change layout or shift `scene`'s height. The one exception is the mini
-calendar, below.
+Reveal-items only ever toggle opacity, never `display`, so revealing them
+as the guest scrolls doesn't change layout or shift `scene`'s height. The
+one exception is the mini calendar, below.
 
 ## Mini calendar reveal
 
@@ -157,12 +197,53 @@ December is the last page — nothing is torn off it, it's simply what's
 left once the other 11 are gone, then it gets a small settle/pulse
 animation once it's the only page remaining. Only then does the date
 grid fade in; then a champagne circle draws itself around the 25 (an SVG
-`stroke-dashoffset` sweep, not a static ring); holds a beat so it
-registers; then fades away — collapsing out of the layout rather than
-leaving an empty gap — and the big "25" takes over from there. All timing
-lives in `CAL_TIMING` / `CAL_MONTH_COUNT` in `app.js`
-(`playCalendarIntro()`), triggered the moment the card's own
-scroll-reveal fires.
+`stroke-dashoffset` sweep, not a static ring); and holds a beat so it
+registers.
+
+### Handing the 25 over to the big date
+
+The card then **dissolves around the circled date rather than taking it
+with it**: the `.lifting` class releases the pad, the year, the other
+day cells and the circle, but deliberately not `.mini-cal-target`, so
+the 25 is left alone on the paper. `startDateMorph()` then replaces it
+with a clone (`.date-morph`) that travels up and scales into
+`.big-date`'s exact position, and hands off the moment it lands.
+
+This exists because the old version announced the date twice — the
+calendar circled 25 December, faded out, and then a separate big "25"
+plus "DECEMBER 2027" faded in immediately below it, each diluting the
+other. Now there's one payoff.
+
+The clone is rendered at `.big-date`'s **final** font size and scaled
+*down* to meet the calendar cell, never the reverse — text rasterised at
+13px and blown up 8× would land blurry, which is the same reason FLIP
+animations always scale down into place.
+
+`.big-date` and `.date-meta` carry `data-gated="date"`, and `revealOne()`
+refuses to reveal them at all — `revealDateBlock()` is the only route in.
+Both sit close enough below the card to be caught by their own
+scroll-observer well before the calendar is finished, which would put
+"DECEMBER 2027" on screen underneath a pad still tearing its way there.
+Gating them on "calendar collapsed" isn't enough either: that opens the
+moment the card disappears, while the 25 is still in flight, landing the
+caption before the date it belongs to.
+
+### If the guest doesn't wait
+
+The full sequence runs about eight seconds, and a guest who scrolls
+straight past shouldn't be held to it — or, worse, have it collapse
+under them later while they're reading something else. A second
+observer watches the card itself; the moment it leaves the viewport
+mid-sequence, `finishCalendarNow()` clears the remaining timers and
+lands on the end state immediately (no morph — there's nobody watching
+it). If they're already reading *below* the card when it collapses,
+`collapseCalendar()` measures how much the letter shrank and does a
+matching `window.scrollBy()`, so the page doesn't yank itself out from
+under them.
+
+All timing lives in `CAL_TIMING` / `CAL_MONTH_COUNT` in `app.js`, and
+the calendar keeps its own timer set (`calClock`) precisely so it can be
+cut short without disturbing anything else.
 
 Its disappearance is the only reveal-item whose exit actually changes the
 letter's rendered height (everything else only ever toggles opacity,
@@ -196,11 +277,72 @@ you'd only really notice if you looked, not a snow globe.
 A near-white flake on a warm-ivory `--background` is a genuine contrast
 trap — an early version was technically present (correct count, correct
 timing) but essentially invisible on screen. Each flake now has a
-solid-ish white core (`radial-gradient(circle, #FFFFFF 65%, transparent
-100%)`) plus a soft warm-brown halo (`box-shadow`, zero spread so it
-blends from the disc's edge instead of reading as a separate ring) to
-give it an edge against the page — still faint by design, just no longer
-imperceptible.
+solid-ish white core (`radial-gradient(circle, #FFFFFF 62%, …)`) plus a
+soft warm-brown halo (`box-shadow`, zero spread so it blends from the
+disc's edge instead of reading as a separate ring) to give it an edge
+against the page — still faint by design, just no longer imperceptible.
+
+Flakes also **sway** rather than falling in a straight line: `snow-fall`
+carries a horizontal component (`--sway`, 8–24px) across five keyframes,
+so each one drifts on the way down. A single linear translate falls like
+a dropped bead, and that read as "particles" more than snow. The largest
+few also carry a `0.6px` blur, which is the whole of the depth cue —
+without it the drift is one flat plane of identical dots.
+
+## Material craft
+
+A few details that are the difference between "warm ivory palette" and
+paper you'd want to hold:
+
+- **The letter paper has grain.** The envelope always had a
+  `.paper-texture`; the letter — the thing guests actually spend their
+  time looking at — was a flat gradient. It now carries a fine two-axis
+  fibre texture (`soft-light`, 0.5 opacity) and a pressed hairline border
+  inset 13px, echoing the frame on the envelope's front.
+- **The eyebrow line is foil, not gold text.** `--gold-foil` is a
+  five-stop gradient applied through `background-clip: text`, so it
+  catches light unevenly the way stamped foil does. Behind an `@supports`
+  guard, falling back to the flat `--champagne` fill — without the guard,
+  an unsupporting engine would render `color: transparent` and the line
+  would simply vanish.
+- **One tracking scale** (`--track-wide` / `--track-mid` /
+  `--track-tight`) instead of the six ad-hoc `letter-spacing` values that
+  had accumulated across the small-caps elements.
+- **Display type is set, not typed** — a touch of negative tracking
+  (`-0.012em`) on `.names` and `.big-date`, since Cormorant sets loose at
+  those sizes, and the ampersand is italic (`.amp`), which is what
+  stationery does.
+
+## The closing signature block
+
+The three CTAs used to be three unrelated visual languages stacked up (a
+solid pill, underlined text, small champagne caps), with the Replay
+button sitting at equal weight underneath and interrupting the emotional
+close. They're now one block opened by a hairline rule, on a single
+alignment and tracking system: one confident primary, one quiet
+secondary, and the calendar link as a genuinely tertiary micro-action.
+Replay is demoted to a 45%-opacity affordance well below it — findable,
+never part of the invitation.
+
+## Layout robustness
+
+The scene's height is driven by a measurement of the letter, and the
+original brief called out stale fixed heights as the bug to avoid. Two
+things make that measurement hold up:
+
+- `document.fonts.ready` re-measures once webfonts land. On a cold
+  WhatsApp in-app browser the Google Fonts request is very likely to
+  resolve *after* the first measurement, and every line of the letter
+  re-flows when it does.
+- A `ResizeObserver` on `.letter` re-measures on any later height change
+  — a photo finally loading, an orientation change, the calendar
+  collapsing.
+
+Both are gated behind `letterSettled`, which only becomes true once the
+letter is fully out of the envelope. Before that the scene is
+*deliberately* short (the letter is still partly inside, and that short
+scene is what hides it), so an early re-measure would break the
+extraction.
 
 ## Before going live
 
@@ -229,5 +371,12 @@ imperceptible.
 - No guest name on the envelope back; no date on the envelope front
 - "I'll be there" / "I can't make it" opens WhatsApp for the correct side
 - "+ Add to calendar"'s `href` resolves to `webcal://` on iOS/Android and the static `.ics` (with `download` set) on desktop; a real click downloads a correctly-named, valid `jessica-hennes-wedding.ics` on desktop
-- Letter content only reveals as you scroll to it, not on a timer; the mini calendar tears off its pages January→November one at a time, December remains and settles, only then shows the dates, circles the 25th, then collapses cleanly (no gap) before the big "25" appears; replaying resets every page to its untorn stacked state and scroll-observation correctly for a second run
-- No snowflakes before the envelope is opened; a fresh set appears once the letter rises, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`
+- The letter is visibly drawn *up out of* the envelope (not cross-faded over it) — nothing of the letter shows through the pocket at any point, and the envelope only dissolves once the letter is clear
+- The first screenful cascades in one item at a time rather than arriving as a single block
+- Letter content only reveals as you scroll to it, not on a timer; the mini calendar tears off its pages January→November one at a time, December remains and settles, only then shows the dates and circles the 25th
+- The card then dissolves around the circled 25 and that 25 travels up into the big "25" — the big date and "DECEMBER 2027" never appear before it lands, and the caption follows the date, not the other way round
+- Scroll past the calendar mid-sequence: it finishes immediately, collapses cleanly (no gap), and the page does **not** jump under you
+- Replaying resets every page to its untorn stacked state, clears any morph clone, and runs correctly a second time
+- No snowflakes before the envelope is opened; a fresh set appears once the letter rises, drifts rather than falling straight, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`
+- With a photo missing, its frame shows an empty ivory plate — never a broken-image icon or stray alt text
+- Throttle the network so the webfonts land late: the letter must not end up clipped or trailing an empty gap

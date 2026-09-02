@@ -19,10 +19,21 @@
   --champagne: #B89565;
   --champagne-soft: rgba(184, 149, 101, 0.35);
 
+  /* Real foil catches light unevenly — a flat fill reads as "gold text",
+     a gradient reads as "stamped". Applied via background-clip: text,
+     behind an @supports guard so it can only ever improve on the flat
+     champagne fallback. */
+  --gold-foil: linear-gradient(100deg, #A07C52 0%, #DDC094 30%, #B89565 50%, #E6D0A8 72%, #A07C52 100%);
+
   --wax-shadow: rgba(90, 20, 15, 0.35);
 
   --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --font-sans: "Manrope", Arial, "Helvetica Neue", sans-serif;
+
+  /* One tracking scale, rather than six ad-hoc values. */
+  --track-wide: 0.22em;
+  --track-mid: 0.15em;
+  --track-tight: 0.06em;
 
   --ease-paper: cubic-bezier(.2, .75, .3, 1);
   --ease-soft: cubic-bezier(.22, .61, .36, 1);
@@ -112,24 +123,32 @@ button:focus-visible,
   width: var(--size, 3px);
   height: var(--size, 3px);
   border-radius: 50%;
-  background: radial-gradient(circle, #FFFFFF 65%, rgba(255, 255, 255, 0) 100%);
+  background: radial-gradient(circle, #FFFFFF 62%, rgba(255, 255, 255, 0.1) 100%);
   /* A near-white flake barely registers against the warm ivory page
      background on its own — a gradient-edged disc alone all but
      disappears at this size, so a solid-ish core plus a darker halo
      (zero spread so it blends from the disc's own edge rather than
      reading as a separate ring) is what actually gives it an edge to
      read against, without making it look like a literal dot. */
-  box-shadow: 0 0 2.5px 0 rgba(107, 90, 71, 0.55);
+  box-shadow: 0 0 3px 0 rgba(107, 90, 71, 0.42);
+  /* A few flakes sit slightly out of focus, which is what gives the
+     drift any sense of depth rather than one flat plane of dots. */
+  filter: blur(var(--blur, 0px));
   opacity: 0;
   animation:
     snow-fall var(--fall-duration, 14s) linear var(--fall-delay, 0s) infinite,
     snow-fade-in 2.4s ease-in var(--fall-delay, 0s) forwards;
 }
 
+/* Real snow drifts; a single linear translate falls like a dropped bead.
+   Swaying the horizontal component across the descent costs nothing and
+   is most of what separates "snow" from "particles". */
 @keyframes snow-fall {
-  to {
-    transform: translate(var(--drift, 0px), 112vh);
-  }
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(var(--sway, 12px), 28vh); }
+  50%  { transform: translate(0, 56vh); }
+  75%  { transform: translate(calc(var(--sway, 12px) * -1), 84vh); }
+  100% { transform: translate(0, 112vh); }
 }
 
 @keyframes snow-fade-in {
@@ -142,16 +161,15 @@ button:focus-visible,
   position: relative;
   width: 100%;
   max-width: 420px;
-  /* Clipped while idle so the hidden (opacity:0) letter — absolutely
-     positioned and much taller than the closed envelope — doesn't
-     stretch the document's scrollable height with invisible space.
-     Switched to visible in app.js the moment the letter actually rises. */
+  /* Clipped so the letter — absolutely positioned, much taller than the
+     closed envelope, and while still "inside" sitting *behind* the
+     envelope — is only ever visible where it has genuinely emerged.
+     app.js pins an explicit px height before the letter rises so the
+     grow to full height is an animatable px→px change (a transition
+     can't tween from "auto"), then switches to visible once the paper
+     is fully unrolled. */
   overflow: hidden;
-  /* Smooths the height shrink once the mini calendar collapses out of the
-     layout later in the sequence. (The initial auto→px grow when the
-     letter rises can't animate — CSS transitions don't tween from/to
-     "auto" — so this only visibly applies to that second, smaller change.) */
-  transition: height 500ms var(--ease-soft);
+  transition: height var(--scene-dur, 500ms) var(--scene-ease, var(--ease-soft));
 }
 
 @media (min-width: 620px) {
@@ -164,16 +182,33 @@ button:focus-visible,
    Envelope
    ============================================================ */
 
+/* The envelope stays *in front of* the letter (z-index above it) for the
+   whole extraction: that opacity is what hides the part of the letter
+   still inside the pocket. It sinks away as the letter is drawn up, so
+   the two crossing over each other is what reads as the letter being
+   pulled out — and only once the letter is clear does the envelope
+   dissolve. Fading it any earlier would let the letter show straight
+   through the pocket. */
 .envelope-stage {
   position: relative;
   width: 100%;
-  transition: opacity 900ms var(--ease-soft), visibility 900ms;
+  z-index: 2;
+  transform: translateY(0);
+  transition:
+    transform 1000ms var(--ease-paper),
+    opacity 600ms var(--ease-soft),
+    visibility 600ms;
+}
+
+.envelope-stage[data-sinking="true"] {
+  transform: translateY(132px);
 }
 
 .envelope-stage[data-hidden="true"] {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: translateY(196px);
 }
 
 .flip-card {
@@ -462,46 +497,112 @@ button:focus-visible,
    Letter
    ============================================================ */
 
+/* z-index 1 — *behind* the envelope, which is what makes the letter
+   invisible while it's still inside. No fade and no scale: a letter
+   being drawn out of an envelope only translates, and cross-fading it
+   is exactly what stopped the old version reading as physical. */
 .letter {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 4;
+  z-index: 1;
   opacity: 0;
-  transform: translateY(48px) scale(0.98);
+  transform: translateY(72px);
   pointer-events: none;
   transition:
-    opacity 950ms var(--ease-soft),
-    transform 950ms var(--ease-soft);
+    transform 1000ms var(--ease-paper),
+    opacity 1ms linear;
 }
 
 .letter[data-risen="true"] {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   pointer-events: auto;
 }
 
+/* Once it's clear of the envelope it can come forward again. */
+.letter[data-out="true"] {
+  z-index: 5;
+}
+
 .letter-paper {
+  position: relative;
   background: var(--paper);
   background-image: linear-gradient(180deg, var(--paper), var(--paper-secondary) 140%);
   border-radius: 3px;
-  padding: 40px 28px 34px;
+  padding: 44px 28px 36px;
   box-shadow:
     0 1px 1px rgba(75, 64, 59, 0.08),
     0 24px 48px -20px rgba(75, 64, 59, 0.4);
   text-align: center;
 }
 
+/* Ivory stock has grain and a faint pressed border. The envelope already
+   had a paper texture; the letter — the thing guests actually look at —
+   was a flat gradient. */
+.letter-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(102deg, rgba(255, 255, 255, 0.55) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(8deg, rgba(75, 64, 59, 0.022) 0 1px, transparent 1px 5px);
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+}
+
+.letter-paper::after {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border: 1px solid rgba(184, 149, 101, 0.16);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Keep the copy above the grain and the pressed border. */
+.letter-paper > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Luxury motion is slow, small and certain. Everything used to arrive on
+   the same 620ms / 14px fade, which flattened the hierarchy the
+   typography works so hard to build — so each role now has its own
+   weight: the eyebrow barely moves, the names take their time. */
 .reveal-item {
   opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 620ms var(--ease-soft), transform 620ms var(--ease-soft);
+  transform: translateY(10px);
+  transition: opacity 820ms var(--ease-soft), transform 820ms var(--ease-soft);
 }
 
 .reveal-item.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+.eyebrow.reveal-item {
+  transform: translateY(5px);
+  transition-duration: 980ms;
+}
+
+.names.reveal-item {
+  transform: translateY(17px);
+  transition-duration: 1180ms;
+}
+
+.signoff.reveal-item {
+  transform: translateY(13px);
+  transition-duration: 1050ms;
+}
+
+/* The closing block should feel responsive, not ceremonial. */
+.actions.reveal-item {
+  transform: translateY(9px);
+  transition-duration: 640ms;
 }
 
 /* Photos, set into the letter alongside the message rather than
@@ -511,7 +612,7 @@ button:focus-visible,
    text fades around them. */
 .photo-block {
   width: clamp(200px, 62vw, 260px);
-  margin: 0 auto 34px;
+  margin: 0 auto 40px;
   background: var(--paper);
   padding: 10px 10px 26px;
   border-radius: 2px;
@@ -526,6 +627,15 @@ button:focus-visible,
   object-fit: cover;
   border-radius: 1px;
   display: block;
+  /* Also the resting state if a photo is slow or missing — a soft ivory
+     plate rather than a broken-image icon in the middle of the letter. */
+  background: var(--paper-secondary);
+}
+
+/* app.js swaps a failed photo's src for a blank pixel, so the frame and
+   its reserved 4:5 space survive as an empty ivory plate. */
+.photo-block.photo-missing img {
+  background: var(--paper-secondary);
 }
 
 .reveal-item.photo-block {
@@ -547,12 +657,22 @@ button:focus-visible,
   transform: translateY(0) rotate(-2deg) scale(1);
 }
 
-.letter-paper > p:first-child {
+.eyebrow {
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: var(--track-wide);
   text-transform: uppercase;
   color: var(--champagne);
-  margin: 0 0 22px;
+  margin: 0 0 26px;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .eyebrow {
+    background: var(--gold-foil);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
 }
 
 .names {
@@ -560,8 +680,19 @@ button:focus-visible,
   font-weight: 500;
   font-size: clamp(38px, 12vw, 52px);
   line-height: 1.08;
-  margin: 0 0 20px;
+  /* Cormorant sets loose at display sizes; a touch of negative tracking
+     is what makes large serif type look set rather than typed. */
+  letter-spacing: -0.012em;
+  margin: 0 0 22px;
   color: var(--ink);
+}
+
+/* Stationery convention: the ampersand is the one italic in the lockup. */
+.amp {
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+  padding-right: 0.05em;
 }
 
 .intro {
@@ -570,7 +701,7 @@ button:focus-visible,
   font-size: clamp(16px, 4.6vw, 19px);
   line-height: 1.5;
   color: var(--ink);
-  margin: 0 0 26px;
+  margin: 0 0 34px;
 }
 
 .divider {
@@ -578,7 +709,7 @@ button:focus-visible,
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin: 0 0 26px;
+  margin: 0 0 34px;
   color: var(--champagne);
 }
 
@@ -606,12 +737,25 @@ button:focus-visible,
   display: flex;
   justify-content: center;
   margin: 0 0 30px;
-  transition: opacity 450ms var(--ease-soft), transform 450ms var(--ease-soft);
 }
 
-.calendar-intro.show.leaving {
+/* The card dissolves *around* the circled 25 rather than taking it with
+   it — the pad, the year, the other days and the circle all release,
+   the date itself stays put, and app.js then carries it up into the big
+   "25". One payoff instead of the date being announced twice. */
+.calendar-intro.lifting .mini-calendar {
+  background: transparent;
+  box-shadow: none;
+  transition: background 420ms var(--ease-soft), box-shadow 420ms var(--ease-soft);
+}
+
+.calendar-intro.lifting .cal-pad,
+.calendar-intro.lifting .mini-cal-year,
+.calendar-intro.lifting .mini-cal-dow,
+.calendar-intro.lifting .mini-cal-cell:not(.mini-cal-target),
+.calendar-intro.lifting .mini-cal-circle {
   opacity: 0;
-  transform: translateY(-10px) scale(0.96);
+  transition: opacity 420ms var(--ease-soft);
 }
 
 .mini-calendar {
@@ -780,17 +924,38 @@ button:focus-visible,
   font-weight: 500;
   font-size: clamp(94px, 27vw, 112px);
   line-height: 0.9;
-  margin: 0 0 14px;
+  letter-spacing: -0.015em;
+  margin: 0 0 16px;
   color: var(--ink);
+}
+
+/* The clone that carries the circled 25 out of the calendar and up into
+   .big-date. Rendered at the *final* size and scaled down to meet the
+   calendar cell (rather than the reverse), so it lands crisp — the same
+   reason FLIP animations always scale down into place, never up. */
+.date-morph {
+  position: absolute;
+  left: 0;
+  right: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(94px, 27vw, 112px);
+  line-height: 0.9;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-align: center;
+  pointer-events: none;
+  z-index: 3;
+  will-change: transform;
 }
 
 .date-meta {
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: var(--track-wide);
   text-transform: uppercase;
   color: var(--muted);
   line-height: 1.9;
-  margin: 0 0 30px;
+  margin: 0 0 40px;
 }
 
 .venue {
@@ -798,21 +963,21 @@ button:focus-visible,
   font-size: clamp(15px, 4.4vw, 17px);
   line-height: 1.55;
   color: var(--ink);
-  margin: 0 0 26px;
+  margin: 0 0 38px;
 }
 
 .closing {
   font-size: 13.5px;
   line-height: 1.75;
   color: var(--ink);
-  margin: 0 0 22px;
+  margin: 0 0 24px;
 }
 
 .save-note {
   font-size: 12.5px;
   line-height: 1.75;
   color: var(--muted);
-  margin: 0 0 26px;
+  margin: 0 0 34px;
 }
 
 .signoff {
@@ -821,66 +986,103 @@ button:focus-visible,
   font-size: clamp(17px, 4.8vw, 20px);
   line-height: 1.5;
   color: var(--ink);
-  margin: 0 0 34px;
+  margin: 0 0 40px;
 }
 
+/* One closing signature block, on a single alignment and tracking
+   system, rather than three unrelated button languages stacked up: a
+   hairline rule opens it, one confident primary, one quiet secondary,
+   and the calendar link as a genuinely tertiary micro-action. */
 .actions {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  padding-top: 32px;
+}
+
+.actions::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 54px;
+  height: 1px;
+  transform: translateX(-50%);
+  background: var(--champagne-soft);
 }
 
 .btn {
-  min-height: 48px;
-  padding: 0 28px;
+  min-height: 50px;
+  padding: 0 34px;
   border-radius: 999px;
-  font-size: 13px;
-  letter-spacing: 0.06em;
+  font-size: 12.5px;
+  letter-spacing: var(--track-tight);
 }
 
 .btn-primary {
-  border: 1px solid var(--champagne);
+  border: 1px solid rgba(184, 149, 101, 0.55);
   color: var(--ink);
-  background: rgba(184, 149, 101, 0.08);
-  transition: background 220ms ease, transform 160ms ease;
+  background: rgba(184, 149, 101, 0.07);
+  transition:
+    background 260ms ease,
+    border-color 260ms ease,
+    transform 180ms ease;
 }
-.btn-primary:hover { background: rgba(184, 149, 101, 0.16); }
-.btn-primary:active { transform: scale(0.97); }
+.btn-primary:hover {
+  background: rgba(184, 149, 101, 0.15);
+  border-color: var(--champagne);
+}
+.btn-primary:active { transform: scale(0.975); }
 
 .btn-secondary {
   color: var(--muted);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  min-height: 44px;
+  font-size: 12.5px;
+  letter-spacing: var(--track-tight);
+  min-height: 42px;
+  padding: 0 2px;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(130, 115, 106, 0.32);
+  transition: color 220ms ease, border-color 220ms ease;
+}
+.btn-secondary:hover {
+  color: var(--ink);
+  border-color: rgba(130, 115, 106, 0.6);
 }
 
 .btn-calendar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 6px;
+  margin-top: 2px;
   min-height: 44px;
   padding: 0 12px;
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 9.5px;
+  letter-spacing: var(--track-mid);
   text-transform: uppercase;
-  color: var(--champagne);
+  color: rgba(184, 149, 101, 0.9);
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* A demo affordance, not part of the invitation — it should be findable,
+   never part of the emotional close. */
 .replay-btn {
   display: none;
-  margin: 30px auto 0;
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  margin: 46px auto 0;
+  font-size: 9px;
+  letter-spacing: var(--track-mid);
   text-transform: uppercase;
   color: var(--muted);
+  opacity: 0.45;
   min-height: 44px;
   padding: 0 12px;
+  transition: opacity 220ms ease;
 }
+
+.replay-btn:hover { opacity: 0.85; }
 
 .letter[data-risen="true"] .replay-btn {
   display: inline-flex;
@@ -903,14 +1105,30 @@ button:focus-visible,
   .reveal-item,
   .divider-line,
   .calendar-intro,
+  .calendar-intro .mini-calendar,
+  .calendar-intro .cal-pad,
+  .calendar-intro .mini-cal-year,
+  .calendar-intro .mini-cal-dow,
+  .calendar-intro .mini-cal-cell,
   .cal-page,
   .cal-page-final,
   .mini-cal-grid,
+  .mini-cal-circle,
   .mini-cal-circle circle,
+  .date-morph,
   .envelope-stage,
   .scene {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+  }
+  /* No sliding the letter out of a pocket for someone who asked for less
+     motion — it just arrives, already out. */
+  .letter,
+  .letter[data-risen="true"] {
+    transform: none !important;
+  }
+  .envelope-stage[data-sinking="true"] {
+    transform: none !important;
   }
   .flip-hint {
     animation: none;
