@@ -370,6 +370,44 @@ thing twice.
 card. The hairline rule that used to open them is dropped, since the
 card's own heading and flourish already do that job.
 
+## The flower arch and the crest
+
+The reference's strongest unifying element is a **pointed mihrab arch**
+recurring as a frame device across its sections. That shape carries
+religious meaning that isn't ours to borrow, so the same structural idea
+is rendered as a **flower arch** — which is a thing that actually stands
+at a wedding.
+
+It appears twice, the way the reference's does:
+
+- **Over the names**, as the hero moment. The arch draws itself first
+  (`stroke-dashoffset`, 1.5s), and only then do the flowers settle onto
+  it — the order a real arch is dressed in. Blooms gather at the two
+  upper shoulders and thin out down the legs, with a little greenery
+  trailing so the uprights aren't bare.
+- **As the photo frames**, which are now arched windows rather than
+  rectangles, so the motif recurs through the piece instead of being a
+  one-off.
+
+The arch is **inlined in `index.html` rather than kept in the sprite**.
+`<use>` clones its target into a shadow tree, and document CSS can't
+select into one — `.arch-line` and `.arch-blooms` simply never matched,
+so the arch sat undrawn with its flowers invisible. Inheritable
+properties (`currentColor`, custom properties, `fill-opacity`) do cross
+that boundary, which is why the sprite's other ornaments are fine as
+`<use>` and why the blooms are softened with `fill-opacity` rather than
+`opacity`.
+
+`.names-block` has no padding of its own: its height comes from the
+padding on `.names`, sized to contain the arch's full height (width ×
+236/260). The arch is absolutely positioned, so anything it overhangs
+would land on the paragraph below — which it did, by 7px, until the
+padding was sized against it.
+
+**The crest** crowns the top of the letter. The reference opens its
+formal card with a line of Arabic calligraphy; this is the same gesture
+rendered as pure ornament (`#ornCrest`) instead.
+
 ## Gold foil ornament
 
 The ornaments are hand-authored SVG in a sprite at the top of
@@ -467,6 +505,7 @@ extraction.
 - Scroll past the calendar mid-sequence: it finishes immediately, collapses cleanly (no gap), and the page does **not** jump under you
 - Replaying resets every page to its untorn stacked state, clears any morph clone, and runs correctly a second time
 - No snowflakes before the envelope is opened; a fresh set appears once the letter rises, drifts rather than falling straight, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`
+- The flower arch draws itself before its flowers appear, and never overhangs onto the paragraph below it — check at 320px, 390px and 430px, where the names reflow
 - The calendar pad tears only on a horizontal flick or a tap — a vertical drag on it still scrolls the page, and a half-swipe under 34px drops the page back rather than tearing
 - December is never torn away; the payoff runs on its own once the eleventh page is gone
 - The calendar card stays compact while tearing and opens only when the dates appear

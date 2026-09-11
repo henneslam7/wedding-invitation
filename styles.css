@@ -723,12 +723,12 @@ button:focus-visible,
   transform: translateY(0);
 }
 
-.eyebrow.reveal-item {
+.crest-block.reveal-item {
   transform: translateY(5px);
   transition-duration: 980ms;
 }
 
-.names.reveal-item {
+.names-block.reveal-item {
   transform: translateY(17px);
   transition-duration: 1180ms;
 }
@@ -760,11 +760,14 @@ button:focus-visible,
     0 20px 34px -16px rgba(75, 64, 59, 0.4);
 }
 
+/* Arched, so the arch reads as a motif running through the piece rather
+   than a one-off over the names — and an arched window is the shape a
+   couple actually stands in on the day. */
 .photo-block img {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  border-radius: 1px;
+  border-radius: 50% 50% 3px 3px / 38% 38% 3px 3px;
   display: block;
   /* Also the resting state if a photo is slow or missing — a soft ivory
      plate rather than a broken-image icon in the middle of the letter. */
@@ -796,12 +799,84 @@ button:focus-visible,
   transform: translateY(0) rotate(-2deg) scale(1);
 }
 
+/* ============================================================
+   The crest and the flower arch
+   ============================================================ */
+
+.crest-block {
+  margin: 0 0 26px;
+}
+
+.crest-art {
+  display: block;
+  width: 148px;
+  height: 34px;
+  margin: 0 auto 14px;
+  color: var(--champagne);
+  opacity: 0.9;
+}
+
+/* The names stand inside a flower arch — the reference's recurring frame
+   device, in a language that belongs at this wedding rather than a
+   borrowed one. */
+/* The block's own height is set by the padding on .names below, sized so
+   it contains the full arch — legs included. The arch is positioned
+   absolutely, so anything it overhangs would otherwise land on the
+   paragraph underneath. */
+.names-block {
+  position: relative;
+  margin: 0 0 22px;
+}
+
+.arch-art {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(300px, 100%);
+  aspect-ratio: 260 / 236;
+  transform: translateX(-50%);
+  color: var(--champagne);
+  pointer-events: none;
+}
+
+/* The arch builds itself: the frame is drawn first, then the flowers
+   settle onto it — the same order a real one is dressed in. */
+.arch-line {
+  stroke-dasharray: 560;
+  stroke-dashoffset: 560;
+  transition: stroke-dashoffset 1500ms var(--ease-soft) 180ms;
+}
+
+.names-block.show .arch-line {
+  stroke-dashoffset: 0;
+}
+
+.arch-blooms,
+.arch-leaves {
+  opacity: 0;
+  transition: opacity 900ms var(--ease-soft) 1150ms;
+}
+
+/* fill-opacity rather than opacity, because it inherits into the <use>
+   shadow trees the blooms are cloned from — and keeps each flower just
+   shy of solid, so they read as stamped foil rather than filled shapes. */
+.arch-blooms { fill-opacity: 0.92; }
+.arch-leaves {
+  fill-opacity: 0.82;
+  transition-delay: 980ms;
+}
+
+.names-block.show .arch-blooms,
+.names-block.show .arch-leaves {
+  opacity: 1;
+}
+
 .eyebrow {
   font-size: 10px;
   letter-spacing: var(--track-wide);
   text-transform: uppercase;
   color: var(--champagne);
-  margin: 0 0 26px;
+  margin: 0;
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
@@ -815,14 +890,20 @@ button:focus-visible,
 }
 
 .names {
+  position: relative;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(38px, 12vw, 52px);
-  line-height: 1.08;
+  /* Eased down slightly from 52px so the longer line clears the arch's
+     shoulders instead of crowding them. */
+  font-size: clamp(36px, 11.4vw, 49px);
+  line-height: 1.1;
   /* Cormorant sets loose at display sizes; a touch of negative tracking
      is what makes large serif type look set rather than typed. */
   letter-spacing: -0.012em;
-  margin: 0 0 22px;
+  margin: 0;
+  /* Sits the names in the arch's opening, and makes the block tall
+     enough to hold the arch's full height (width x 236/260). */
+  padding: 90px 0 88px;
   color: var(--ink);
 }
 
@@ -1566,6 +1647,9 @@ button:focus-visible,
   .reveal-item,
   .divider-line,
   .tl-row,
+  .arch-line,
+  .arch-blooms,
+  .arch-leaves,
   .foil-shine,
   .seal-shine::after,
   .cal-hint,
@@ -1585,6 +1669,9 @@ button:focus-visible,
   .scene {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+    /* Zero the staged delays too — shortening a transition to 1ms but
+       leaving it waiting a second to start is still a wait. */
+    transition-delay: 0ms !important;
   }
   /* No sliding the letter out of a pocket for someone who asked for less
      motion — it just arrives, already out. */

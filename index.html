@@ -57,6 +57,37 @@
       <circle cx="27.25" cy="27.25" r="2.1" fill="var(--paper)"/>
     </symbol>
 
+    <!-- A single five-petal bloom, reused along the arch. -->
+    <symbol id="ornBloom" viewBox="0 0 24 24">
+      <g fill="currentColor" transform="translate(12 12)">
+        <circle cx="0" cy="-7" r="4.4"/>
+        <circle cx="6.66" cy="-2.16" r="4.4"/>
+        <circle cx="4.11" cy="5.66" r="4.4"/>
+        <circle cx="-4.11" cy="5.66" r="4.4"/>
+        <circle cx="-6.66" cy="-2.16" r="4.4"/>
+      </g>
+      <circle cx="12" cy="12" r="2.1" fill="var(--paper)"/>
+    </symbol>
+
+    <!-- Crowns the top of the letter. The reference opens its formal card
+         with a line of scripture; this is the same gesture rendered as
+         pure ornament instead. -->
+    <symbol id="ornCrest" viewBox="0 0 200 46">
+      <g fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round">
+        <path d="M100 30C87 30 81 18 67 18C55 18 51 28 39 30C29 31 23 26 15 32"/>
+        <path d="M100 30C113 30 119 18 133 18C145 18 149 28 161 30C171 31 177 26 185 32"/>
+        <path d="M100 30V40"/>
+        <path d="M72 34C80 34 86 31 92 30"/>
+        <path d="M128 34C120 34 114 31 108 30"/>
+      </g>
+      <use href="#ornBloom" x="88" y="6" width="24" height="24"/>
+      <g fill="currentColor">
+        <circle cx="15" cy="32" r="1.6"/>
+        <circle cx="185" cy="32" r="1.6"/>
+        <circle cx="100" cy="41.5" r="1.9"/>
+      </g>
+    </symbol>
+
     <!-- Divider flourish, sits under every section heading. -->
     <symbol id="ornFlourish" viewBox="0 0 160 20">
       <g fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round">
@@ -157,9 +188,44 @@
           <span class="foil-shine"></span>
         </div>
 
-        <p class="reveal-item eyebrow" data-reveal="0">KEEP CHRISTMAS DAY FOR US.</p>
+        <div class="reveal-item crest-block" data-reveal="0">
+          <svg class="crest-art" aria-hidden="true"><use href="#ornCrest"/></svg>
+          <p class="eyebrow">KEEP CHRISTMAS DAY FOR US.</p>
+        </div>
 
-        <h1 class="reveal-item names" data-reveal="1">Jessica<br><span class="amp">&amp;</span> Hennes</h1>
+        <!-- The flower arch the names stand inside. The reference's
+             recurring frame device was a mihrab; a flower arch is the
+             same idea in a language that belongs at this wedding.
+             Inlined rather than kept in the sprite because <use> clones
+             into a shadow tree, where the stylesheet can't reach the
+             parts that have to be animated. -->
+        <div class="reveal-item names-block" data-reveal="1">
+          <svg class="arch-art" viewBox="0 0 260 236" aria-hidden="true" focusable="false">
+            <path class="arch-line" d="M18 228V130A112 112 0 0 1 242 130V228"
+                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <g class="arch-leaves" fill="currentColor">
+              <path d="M0 0C6 -6 16 -6 20 0C16 6 6 6 0 0Z" transform="translate(34 104) rotate(108)"/>
+              <path d="M0 0C5 -5 13 -5 17 0C13 5 5 5 0 0Z" transform="translate(84 26) rotate(28)"/>
+              <path d="M0 0C5 -5 13 -5 17 0C13 5 5 5 0 0Z" transform="translate(158 24) rotate(150)"/>
+              <path d="M0 0C6 -6 16 -6 20 0C16 6 6 6 0 0Z" transform="translate(228 110) rotate(72)"/>
+              <!-- Trailing down the legs, so the uprights aren't bare. -->
+              <path d="M0 0C4 -4 11 -4 14 0C11 4 4 4 0 0Z" transform="translate(18 166) rotate(52)"/>
+              <path d="M0 0C4 -4 11 -4 14 0C11 4 4 4 0 0Z" transform="translate(242 142) rotate(128)"/>
+              <path d="M0 0C3 -3 9 -3 12 0C9 3 3 3 0 0Z" transform="translate(18 198) rotate(-58)"/>
+            </g>
+            <g class="arch-blooms">
+              <use href="#ornBloom" x="20.5" y="74.7" width="16" height="16"/>
+              <use href="#ornBloom" x="51" y="31.8" width="20" height="20"/>
+              <use href="#ornBloom" x="104.1" y="13.2" width="13" height="13"/>
+              <use href="#ornBloom" x="173.1" y="21.6" width="19" height="19"/>
+              <use href="#ornBloom" x="214.2" y="58.3" width="15" height="15"/>
+              <use href="#ornBloom" x="231" y="89.9" width="11" height="11"/>
+              <use href="#ornBloom" x="12.5" y="144.5" width="11" height="11"/>
+              <use href="#ornBloom" x="237.5" y="171.5" width="9" height="9"/>
+            </g>
+          </svg>
+          <h1 class="names">Jessica<br><span class="amp">&amp;</span> Hennes</h1>
+        </div>
 
         <p class="reveal-item intro" data-reveal="2">are getting married —<br>and gathering everyone we love for lunch.</p>
 
