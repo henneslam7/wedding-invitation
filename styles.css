@@ -670,6 +670,153 @@ button:focus-visible,
 .emboss-bl { bottom: 16px; left: 16px; transform: scaleY(-1); }
 .emboss-br { bottom: 16px; right: 16px; transform: scale(-1); }
 
+/* --- Blind-embossed sprays in the envelope's four fold zones --- */
+
+.emb,
+.gp {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.emb svg,
+.gp svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.emb {
+  color: rgba(255, 255, 255, 0.5);
+  filter: drop-shadow(0 1px 0.5px rgba(75, 64, 59, 0.2));
+  opacity: 0.92;
+}
+
+/* Each spray points inwards, toward the seal, the way the four folded
+   flaps of a real envelope all face its centre. */
+.emb-top,
+.gp-top {
+  top: 4%;
+  left: 50%;
+  width: 40%;
+  transform: translateX(-50%) rotate(180deg);
+}
+
+/* Smaller and pushed right down: the seal sits below centre, so a
+   full-size spray here would disappear behind it almost entirely. */
+.emb-bottom,
+.gp-bottom {
+  bottom: 1%;
+  left: 50%;
+  width: 31%;
+  transform: translateX(-50%);
+}
+
+.emb-left,
+.gp-left {
+  top: 50%;
+  left: -4%;
+  width: 32%;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.emb-right,
+.gp-right {
+  top: 50%;
+  right: -4%;
+  width: 32%;
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+/* --- The gold pass ---
+
+   A gold re-stamp of the same ornament, revealed only where a narrow
+   diagonal band of the mask is currently sitting. Sliding that band
+   across is what makes the foil look like it is catching a light being
+   moved over the card, rather than simply fading up. */
+
+.gp-flapzone {
+  position: absolute;
+  inset: 0;
+  /* Matches .flap's clip-path against the full face. */
+  clip-path: polygon(0% 0%, 100% 0%, 50% 62%);
+}
+
+.gold-pass {
+  position: absolute;
+  inset: 0;
+  /* Below the seal (z-index 5): the ornament is stamped into the paper,
+     and the wax sits on top of it. */
+  z-index: 4;
+  color: #D8B474;
+  pointer-events: none;
+  opacity: 0;
+  /* The band itself. Softened at both edges so the foil brightens and
+     dims rather than switching on at a hard line. */
+  -webkit-mask-image: linear-gradient(
+    102deg,
+    transparent 30%,
+    rgba(0, 0, 0, 0.35) 40%,
+    #000 50%,
+    rgba(0, 0, 0, 0.35) 60%,
+    transparent 70%
+  );
+  mask-image: linear-gradient(
+    102deg,
+    transparent 30%,
+    rgba(0, 0, 0, 0.35) 40%,
+    #000 50%,
+    rgba(0, 0, 0, 0.35) 60%,
+    transparent 70%
+  );
+  -webkit-mask-size: 240% 100%;
+  mask-size: 240% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 140% 0;
+  mask-position: 140% 0;
+}
+
+.gold-pass .gp,
+.gold-pass .emboss-corner {
+  filter: drop-shadow(0 0 2px rgba(216, 180, 116, 0.55));
+}
+
+/* The front catches the light shortly after the invitation arrives... */
+.gold-pass-front {
+  animation: gold-pass-sweep 2200ms var(--ease-soft) 900ms 1;
+}
+
+/* ...and the back is lit the moment the card turns over, which is the
+   beat the reference opens on: the light crosses the embossing and the
+   seal glints in the same pass. */
+.flip-card[data-flipped="true"] .back .gold-pass {
+  animation: gold-pass-sweep 2000ms var(--ease-soft) 620ms 1;
+}
+
+/* Once the seal is broken there's nothing left to show off. */
+.flip-card[data-flap="open"] .back .gold-pass {
+  animation: none;
+  opacity: 0;
+}
+
+/* Left to right, the direction the reference's light travels and the
+   direction the eye is already reading in. */
+@keyframes gold-pass-sweep {
+  0% {
+    opacity: 0;
+    -webkit-mask-position: -55% 0;
+    mask-position: -55% 0;
+  }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% {
+    opacity: 0;
+    -webkit-mask-position: 140% 0;
+    mask-position: 140% 0;
+  }
+}
+
 /* A glint travelling across the wax once the seal is in view, so the
    guest's eye is pulled to the thing they're meant to press. */
 .seal-shine {
@@ -690,15 +837,19 @@ button:focus-visible,
   background: linear-gradient(
     100deg,
     rgba(255, 226, 170, 0) 0%,
-    rgba(255, 238, 200, 0.75) 50%,
+    rgba(255, 243, 214, 0.95) 50%,
     rgba(255, 226, 170, 0) 100%
   );
-  mix-blend-mode: overlay;
+  /* `screen` rather than `overlay`: the wax is dark red, and overlay
+     against a dark backdrop barely shifts it — the glint was running
+     correctly and still all but invisible. screen only ever brightens,
+     which is what a highlight travelling over wax actually does. */
+  mix-blend-mode: screen;
   opacity: 0;
 }
 
 .flip-card[data-flipped="true"] .seal-shine::after {
-  animation: seal-glint 1500ms var(--ease-soft) 900ms 2;
+  animation: seal-glint 1400ms var(--ease-soft) 700ms 2;
 }
 
 @keyframes seal-glint {
@@ -1685,7 +1836,10 @@ button:focus-visible,
   .flip-hint,
   .cal-hint,
   .foil-shine,
-  .seal-shine::after {
+  .seal-shine::after,
+  .gold-pass,
+  .gold-pass-front,
+  .flip-card[data-flipped="true"] .back .gold-pass {
     animation: none;
   }
   .snowfall {

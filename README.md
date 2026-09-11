@@ -423,9 +423,39 @@ on the letter and blind-embossed on the envelope.
   it reads as one continuous stamped frame rather than four ornaments
   sharing a card.
 - **Section flourishes** sit under every insert-card heading.
-- **The envelope's emboss** is the same vine with *no colour at all*: a
-  highlight pressed up and a shadow pressed down, which is the whole of
-  how a real stationery die reads on uncoated stock.
+- **The envelope's emboss** is blind — *no colour at all*: a highlight
+  pressed up and a shadow pressed down, which is the whole of how a real
+  stationery die reads on uncoated stock. The front carries corner
+  vines; the back carries a floral spray in each of the four fold zones,
+  all facing the seal, with the top one stamped on the flap itself so it
+  folds away with it.
+
+### The gold pass
+
+When the card turns over, a band of light travels left to right across
+the whole face: each spray flares gold as the band reaches it and dims
+again behind it, and the wax seal glints in the same pass. The front
+gets the same treatment shortly after the invitation arrives.
+
+It's a **gold re-stamp of the same ornament behind a moving mask**, not
+a fade — a `linear-gradient` mask at 240% width, soft-edged on both
+sides, whose `mask-position` slides across. Every gold spray has to sit
+in *one* masked layer (`.gold-pass`, inset over the whole face), because
+per-zone masks would light each ornament independently instead of
+reading as a single light being moved over the card.
+
+Two things this got wrong first time round, both worth keeping in mind
+if it's ever touched again:
+
+- The seal's glint was already running correctly and still all but
+  invisible, because it used `mix-blend-mode: overlay` — against dark
+  red wax, overlay barely shifts anything. `screen` only ever brightens,
+  which is what a highlight crossing wax actually does.
+- The gold layer sat at `z-index: 6`, above the seal, so flowers drew
+  *across the wax*. The ornament is stamped into the paper and the seal
+  sits on top of it, so the gold belongs at `z-index: 4` — under the
+  seal, over the flap. `.gp-flapzone` re-applies the flap's own
+  `clip-path` so the gold stamp stops exactly where the embossed one does.
 - **Light sweeps.** Foil catches light unevenly, so a narrow
   `soft-light` gradient crosses the letter's frame once when it settles,
   and an `overlay` glint crosses the wax seal twice after the envelope
@@ -505,6 +535,7 @@ extraction.
 - Scroll past the calendar mid-sequence: it finishes immediately, collapses cleanly (no gap), and the page does **not** jump under you
 - Replaying resets every page to its untorn stacked state, clears any morph clone, and runs correctly a second time
 - No snowflakes before the envelope is opened; a fresh set appears once the letter rises, drifts rather than falling straight, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`
+- Turning the envelope over runs the gold pass: a band of light crosses the embossed florals left to right, each flaring gold in turn, with the seal glinting in the same pass — and no gold ever drawn on top of the wax
 - The flower arch draws itself before its flowers appear, and never overhangs onto the paragraph below it — check at 320px, 390px and 430px, where the names reflow
 - The calendar pad tears only on a horizontal flick or a tap — a vertical drag on it still scrolls the page, and a half-swipe under 34px drops the page back rather than tearing
 - December is never torn away; the payoff runs on its own once the eleventh page is gone

@@ -69,6 +69,37 @@
       <circle cx="12" cy="12" r="2.1" fill="var(--paper)"/>
     </symbol>
 
+    <!-- A floral spray for the envelope's four fold zones: a stem with
+         symmetric branches fanning out to blooms. Stamped blind (no
+         colour) on the paper, and re-stamped in gold behind a moving
+         mask so a band of light appears to travel across the texture. -->
+    <symbol id="ornSpray" viewBox="0 0 140 96">
+      <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+        <path d="M70 92V44"/>
+        <path d="M70 74C58 74 48 66 38 60"/>
+        <path d="M70 74C82 74 92 66 102 60"/>
+        <path d="M70 60C60 58 52 50 46 40"/>
+        <path d="M70 60C80 58 88 50 94 40"/>
+        <path d="M70 48C64 42 60 34 58 26"/>
+        <path d="M70 48C76 42 80 34 82 26"/>
+      </g>
+      <g fill="currentColor">
+        <path d="M0 0C4 -4 11 -4 14 0C11 4 4 4 0 0Z" transform="translate(50 66) rotate(200)"/>
+        <path d="M0 0C4 -4 11 -4 14 0C11 4 4 4 0 0Z" transform="translate(90 66) rotate(-20)"/>
+        <path d="M0 0C4 -4 10 -4 13 0C10 4 4 4 0 0Z" transform="translate(56 50) rotate(215)"/>
+        <path d="M0 0C4 -4 10 -4 13 0C10 4 4 4 0 0Z" transform="translate(84 50) rotate(-35)"/>
+        <path d="M0 0C3 -3 9 -3 12 0C9 3 3 3 0 0Z" transform="translate(62 82) rotate(190)"/>
+        <path d="M0 0C3 -3 9 -3 12 0C9 3 3 3 0 0Z" transform="translate(78 82) rotate(-10)"/>
+      </g>
+      <use href="#ornBloom" x="27" y="49" width="22" height="22"/>
+      <use href="#ornBloom" x="91" y="49" width="22" height="22"/>
+      <use href="#ornBloom" x="37" y="31" width="18" height="18"/>
+      <use href="#ornBloom" x="85" y="31" width="18" height="18"/>
+      <use href="#ornBloom" x="50" y="18" width="16" height="16"/>
+      <use href="#ornBloom" x="74" y="18" width="16" height="16"/>
+      <use href="#ornBloom" x="60" y="34" width="20" height="20"/>
+    </symbol>
+
     <!-- Crowns the top of the letter. The reference opens its formal card
          with a line of scripture; this is the same gesture rendered as
          pure ornament instead. -->
@@ -144,6 +175,12 @@
               <svg class="emboss-corner emboss-bl"><use href="#ornCorner"/></svg>
               <svg class="emboss-corner emboss-br"><use href="#ornCorner"/></svg>
             </span>
+            <span class="gold-pass gold-pass-front" aria-hidden="true">
+              <svg class="emboss-corner emboss-tl"><use href="#ornCorner"/></svg>
+              <svg class="emboss-corner emboss-tr"><use href="#ornCorner"/></svg>
+              <svg class="emboss-corner emboss-bl"><use href="#ornCorner"/></svg>
+              <svg class="emboss-corner emboss-br"><use href="#ornCorner"/></svg>
+            </span>
             <span class="front-address">
               <span class="to-label">To,</span>
               <span class="guest-name" id="guestName">For you.</span>
@@ -154,11 +191,32 @@
           <!-- BACK -->
           <div class="face back" id="envelopeBack" aria-hidden="true">
             <div class="paper-texture" aria-hidden="true"></div>
-            <div class="envelope-body" aria-hidden="true"></div>
+            <div class="envelope-body" aria-hidden="true">
+              <span class="emb emb-left"><svg><use href="#ornSpray"/></svg></span>
+              <span class="emb emb-right"><svg><use href="#ornSpray"/></svg></span>
+              <span class="emb emb-bottom"><svg><use href="#ornSpray"/></svg></span>
+            </div>
 
             <div class="flap" id="flap">
               <div class="flap-shadow" aria-hidden="true"></div>
+              <!-- Stamped on the flap itself, so it folds away with it. -->
+              <span class="emb emb-top"><svg><use href="#ornSpray"/></svg></span>
             </div>
+
+            <!-- The gold pass. One band of light crosses the whole face,
+                 so every spray has to live in a single masked layer —
+                 per-zone masks would light each one up independently
+                 instead of reading as one sweep. -->
+            <span class="gold-pass" aria-hidden="true">
+              <!-- Clipped to the flap's own triangle, so the gold stamp
+                   stops exactly where the embossed one does. -->
+              <span class="gp-flapzone">
+                <span class="gp gp-top"><svg><use href="#ornSpray"/></svg></span>
+              </span>
+              <span class="gp gp-left"><svg><use href="#ornSpray"/></svg></span>
+              <span class="gp gp-right"><svg><use href="#ornSpray"/></svg></span>
+              <span class="gp gp-bottom"><svg><use href="#ornSpray"/></svg></span>
+            </span>
 
             <button type="button" class="seal-btn" id="sealBtn" aria-label="Break the wax seal to open your invitation">
               <img class="seal-img seal-full" id="sealFull" src="/assets/seal-full.webp" alt="" draggable="false">
