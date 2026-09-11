@@ -67,16 +67,16 @@
     unrollDuration: 850
   };
 
-  const CAL_MONTH_COUNT = 12; // January through December
-
   // Sub-timing (ms) for the mini calendar's own tear-off-the-months →
   // reveal the dates → circle → hold → leave beat, offsets measured from
   // the moment it scrolls into view. Paced deliberately slow, like a
   // little story rather than a blur — a page torn off a real desk pad
   // per month (11 tears; December is the page left underneath), not a
   // fast text swap.
+  // The guest tears the months off themselves, so there's no interval
+  // between them any more — these cover the payoff once December is bare.
   const CAL_TIMING = {
-    monthStep: 450, // x11 tears, January through November
+    fastForwardStep: 90, // only used when cutting the sequence short
     tearDuration: 700, // must match .cal-pad .cal-page.tearing's transition
     daysRevealDelay: 300, // after the last tear lands (December revealed)
     daysRevealDuration: 450,
@@ -146,6 +146,8 @@
   const sealBtn = document.getElementById("sealBtn");
   const calendarIntro = document.getElementById("calendarIntro");
   const calTargetCell = document.getElementById("calTargetCell");
+  const calPad = document.getElementById("calPad");
+  const calHint = document.getElementById("calHint");
   const letter = document.getElementById("letter");
   const letterPaper = document.getElementById("letterPaper");
   const bigDate = document.getElementById("bigDate");
@@ -376,28 +378,149 @@
     // differently (not identical, matching the wax fragments/photos
     // elsewhere), revealing the page beneath. December is the page left
     // underneath once the others are gone.
-    for (let i = 0; i < pages.length - 1; i++) {
-      const page = pages[i];
-      calClock.after(at(i * CAL_TIMING.monthStep), () => {
-        page.style.setProperty("--tear-x", `${(Math.random() * 36 - 18).toFixed(0)}px`);
-        page.style.setProperty("--tear-y", `${(84 + Math.random() * 28).toFixed(0)}px`);
-        page.style.setProperty("--tear-rot", `${(Math.random() * 20 - 10).toFixed(0)}deg`);
-        page.classList.add("tearing");
-      });
+    if (prefersReducedMotion) {
+      // No gesture to ask for, and no animation to watch — land on the
+      // finished state straight away.
+      tearablePages().forEach(tearPage);
+      runCalendarPayoff(el, finalPage);
+      return;
     }
 
-    const tearEnd = (CAL_MONTH_COUNT - 1) * CAL_TIMING.monthStep + CAL_TIMING.tearDuration;
-    const daysStart = tearEnd + CAL_TIMING.daysRevealDelay;
-    const circleStart = daysStart + CAL_TIMING.daysRevealDuration + CAL_TIMING.circleDelay;
-    const liftStart = circleStart + CAL_TIMING.circleDuration + CAL_TIMING.hold;
+    enableManualTear(el, pages, finalPage);
+  }
 
-    calClock.after(at(tearEnd), () => finalPage.classList.add("settled"));
-    calClock.after(at(daysStart), () => el.classList.add("days-shown"));
-    calClock.after(at(circleStart), () => el.classList.add("circled"));
+  // Every page but December. December is never torn off — it's simply
+  // what's left underneath once the other eleven are gone.
+  function tearablePages() {
+    return Array.from(calendarIntro.querySelectorAll(".cal-page")).slice(0, -1);
+  }
+
+  function pagesLeft() {
+    return tearablePages().filter((p) => !p.classList.contains("tearing"));
+  }
+
+  function tearPage(page, direction) {
+    if (page.classList.contains("tearing")) return;
+    const away = direction || (Math.random() < 0.5 ? -1 : 1);
+    page.classList.remove("dragging", "snapping");
+    page.style.removeProperty("transform");
+    page.style.setProperty("--tear-x", `${(away * (46 + Math.random() * 40)).toFixed(0)}px`);
+    page.style.setProperty("--tear-y", `${(70 + Math.random() * 34).toFixed(0)}px`);
+    page.style.setProperty("--tear-rot", `${(away * (8 + Math.random() * 16)).toFixed(0)}deg`);
+    page.classList.add("tearing");
+  }
+
+  /* ------------------------------------------------------------
+     Tearing the months off by hand
+
+     A sideways flick, tap, or Enter/Space rips the top page away. The
+     gesture is horizontal on purpose: a downward tear — the natural
+     real-world direction — would fight the page's own vertical scroll
+     on every single attempt.
+     ------------------------------------------------------------ */
+
+  const TEAR_THRESHOLD = 34; // px of horizontal travel that commits a tear
+
+  function enableManualTear(el, pages, finalPage) {
+    let drag = null;
+
+    const finish = () => {
+      calPad.dataset.spent = "true";
+      if (calHint) calHint.dataset.done = "true";
+      runCalendarPayoff(el, finalPage);
+    };
+
+    const ripTop = (direction) => {
+      const remaining = pagesLeft();
+      if (!remaining.length) return;
+      tearPage(remaining[0], direction);
+      if (calHint) calHint.dataset.done = "true";
+      if (pagesLeft().length === 0) finish();
+    };
+
+    calPad.addEventListener("pointerdown", (e) => {
+      if (calendarPhase !== "playing") return;
+      const remaining = pagesLeft();
+      if (!remaining.length) return;
+      const page = remaining[0];
+      drag = { page, x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId };
+      page.classList.add("dragging");
+      page.classList.remove("snapping");
+      calPad.setPointerCapture(e.pointerId);
+    });
+
+    calPad.addEventListener("pointermove", (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      // Let a clearly vertical drag through to the page instead of
+      // hijacking it — the guest is scrolling, not tearing.
+      if (Math.abs(dy) > Math.abs(dx) * 1.6 && Math.abs(dy) > 12) {
+        releaseDrag(false);
+        return;
+      }
+      drag.moved = Math.abs(dx);
+      drag.dir = dx < 0 ? -1 : 1;
+      drag.page.style.transform =
+        `translate(${dx.toFixed(1)}px, ${(dy * 0.35).toFixed(1)}px) rotate(${(dx * 0.07).toFixed(2)}deg)`;
+    });
+
+    function releaseDrag(commit) {
+      if (!drag) return;
+      const { page, moved, dir } = drag;
+      const held = drag;
+      drag = null;
+      page.classList.remove("dragging");
+      if (commit && moved >= TEAR_THRESHOLD) {
+        tearPage(page, dir);
+        if (calHint) calHint.dataset.done = "true";
+        if (pagesLeft().length === 0) finish();
+        return;
+      }
+      if (commit && moved < 6) {
+        // A tap counts too: not everyone will read "swipe", and a page
+        // that refuses to come off on a tap just reads as broken.
+        ripTop(Math.random() < 0.5 ? -1 : 1);
+        return;
+      }
+      // Short of the threshold — drop it back onto the pad.
+      page.style.removeProperty("transform");
+      page.classList.add("snapping");
+      calClock.after(340, () => page.classList.remove("snapping"));
+      void held;
+    }
+
+    calPad.addEventListener("pointerup", () => releaseDrag(true));
+    calPad.addEventListener("pointercancel", () => releaseDrag(false));
+
+    calPad.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+      e.preventDefault();
+      if (calendarPhase !== "playing") return;
+      ripTop();
+    });
+  }
+
+  // Once December is bare: it settles, the dates fade in, the 25 is
+  // circled, and the card then hands that 25 up to .big-date.
+  function runCalendarPayoff(el, finalPage) {
+    const scale = prefersReducedMotion ? 0 : 1;
+    const at = (ms) => Math.round(ms * scale);
+
+    const settleAt = at(CAL_TIMING.tearDuration * 0.55);
+    const daysStart = settleAt + at(CAL_TIMING.daysRevealDelay);
+    const circleStart =
+      daysStart + at(CAL_TIMING.daysRevealDuration + CAL_TIMING.circleDelay);
+    const liftStart =
+      circleStart + at(CAL_TIMING.circleDuration + CAL_TIMING.hold);
+
+    calClock.after(settleAt, () => finalPage.classList.add("settled"));
+    calClock.after(daysStart, () => el.classList.add("days-shown"));
+    calClock.after(circleStart, () => el.classList.add("circled"));
     // The card releases everything except the circled date...
-    calClock.after(at(liftStart), () => el.classList.add("lifting"));
+    calClock.after(liftStart, () => el.classList.add("lifting"));
     // ...and then that date is carried up into the big "25".
-    calClock.after(at(liftStart + CAL_TIMING.liftDuration), () => collapseCalendar());
+    calClock.after(liftStart + at(CAL_TIMING.liftDuration), () => collapseCalendar());
   }
 
   // Cut the calendar's remaining sequence short and land on its end
@@ -405,6 +528,9 @@
   function finishCalendarNow() {
     if (calendarPhase !== "playing") return;
     calClock.clearAll();
+    tearablePages().forEach(tearPage);
+    calPad.dataset.spent = "true";
+    if (calHint) calHint.dataset.done = "true";
     calendarIntro.classList.add("days-shown", "circled");
     collapseCalendar();
   }
@@ -599,8 +725,11 @@
     calendarIntro.classList.remove("days-shown", "circled", "lifting");
     calendarIntro.style.display = "";
     calendarIntro.querySelectorAll(".cal-page").forEach((page) => {
-      page.classList.remove("tearing", "settled");
+      page.classList.remove("tearing", "settled", "dragging", "snapping");
+      page.style.removeProperty("transform");
     });
+    delete calPad.dataset.spent;
+    if (calHint) delete calHint.dataset.done;
 
     envelopeFront.focus({ preventScroll: true });
     announce("Invitation reset. Tap the envelope to begin again.");
@@ -739,6 +868,66 @@
       btnCalendar.removeAttribute("download");
     }
     // Desktop keeps the plain href + download="..." already set in the HTML.
+  }
+
+  /* ------------------------------------------------------------
+     Countdown
+     ------------------------------------------------------------ */
+
+  // Lunch on Christmas Day, Hong Kong time. The offset is written into
+  // the string rather than relying on the guest's own zone, so the
+  // countdown means the same thing from anywhere.
+  const WEDDING_AT = new Date("2027-12-25T12:00:00+08:00");
+
+  {
+    const cdDays = document.getElementById("cdDays");
+    const cdHours = document.getElementById("cdHours");
+    const cdMins = document.getElementById("cdMins");
+    const cdSecs = document.getElementById("cdSecs");
+    const pad2 = (n) => String(n).padStart(2, "0");
+
+    function tickCountdown() {
+      let left = WEDDING_AT.getTime() - Date.now();
+      if (left <= 0) {
+        cdDays.textContent = "0";
+        cdHours.textContent = cdMins.textContent = cdSecs.textContent = "00";
+        return false;
+      }
+      const secs = Math.floor(left / 1000);
+      cdDays.textContent = String(Math.floor(secs / 86400));
+      cdHours.textContent = pad2(Math.floor(secs / 3600) % 24);
+      cdMins.textContent = pad2(Math.floor(secs / 60) % 60);
+      cdSecs.textContent = pad2(secs % 60);
+      return true;
+    }
+
+    tickCountdown();
+    const countdownTimer = setInterval(() => {
+      if (!tickCountdown()) clearInterval(countdownTimer);
+    }, 1000);
+  }
+
+  /* ------------------------------------------------------------
+     Open in Maps
+
+     Same reasoning as the calendar button: hand the guest off to the app
+     their phone actually uses. maps.apple.com opens Apple Maps on iOS
+     and falls back to a web map elsewhere; the Google URL opens the
+     Google Maps app on Android and the web map otherwise.
+     ------------------------------------------------------------ */
+
+  {
+    const btnMap = document.getElementById("btnMap");
+    const ua = navigator.userAgent || "";
+    const isIOS =
+      /iP(hone|od|ad)/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (btnMap && isIOS) {
+      const q = encodeURIComponent(
+        "Kimpton Tsim Sha Tsui Hong Kong, 11 Middle Road, Tsim Sha Tsui, Kowloon, Hong Kong"
+      );
+      btnMap.href = `https://maps.apple.com/?q=${q}`;
+    }
   }
 
   /* ------------------------------------------------------------

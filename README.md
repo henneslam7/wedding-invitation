@@ -193,6 +193,25 @@ paced as its own little story beat, not a fast blur. The pages are
 stacked with a slight fanned offset and shadow per `:nth-child` so it
 reads as a real paper pad even before anything moves, and each page has
 a dashed perforation line near its top like a genuine tear-off calendar.
+### The guest does the tearing
+
+The months don't come off on a timer — **the guest rips each one off
+themselves**. A sideways flick across the pad tears the top page away
+with the throw following the direction of the swipe; a tap tears one
+too (not everyone reads "swipe", and a pad that ignores a tap just reads
+as broken); and the pad is focusable, with Enter or Space tearing a page
+for keyboard and switch users.
+
+The gesture is **horizontal on purpose**. Tearing downward is the
+natural real-world direction, but on a phone it would fight the page's
+own vertical scroll on every single attempt. `touch-action: pan-y` keeps
+scrolling intact, and `pointermove` bails out of a drag that turns out to
+be clearly vertical — the guest is scrolling past, not tearing.
+
+A drag shorter than `TEAR_THRESHOLD` (34px) drops the page back onto the
+pad (`.snapping`) rather than committing, so a hesitant half-swipe isn't
+punished.
+
 December is the last page — nothing is torn off it, it's simply what's
 left once the other 11 are gone, then it gets a small settle/pulse
 animation once it's the only page remaining. Only then does the date
@@ -313,6 +332,69 @@ paper you'd want to hold:
   those sizes, and the ampersand is italic (`.amp`), which is what
   stationery does.
 
+## The invitation suite — insert cards
+
+The main letter carries the announcement; the practical details travel
+below it as separate cards, the way a real invitation suite ships a
+details card, a map card and a reply card tucked behind the main one.
+Each is a `.insert-card` inside `.letter`, so the scene's single height
+measurement still covers everything.
+
+| Card | `data-reveal` | Notes |
+| --- | --- | --- |
+| The celebration begins in | 14 | Live countdown to `2027-12-25T12:00:00+08:00` |
+| The day | 15 | **Placeholder running order** |
+| Where | 16 | Venue, address, Open in Maps |
+| Dress code | 17 | **Placeholder copy and palette** |
+| Will you be there? | 18 | RSVP — moved out of the letter |
+
+**Countdown.** The offset is written into the target (`+08:00`) rather
+than trusting the guest's own timezone, so it means the same thing from
+anywhere. Numerals are `tabular-nums`, otherwise the row jitters every
+second as digit widths change.
+
+**The day.** A single rail with the entries to its right, not the
+reference's alternating left/right columns — at phone width that leaves
+about 150px a side, too narrow for either column to breathe. Rows stagger
+in off the card's own reveal via `--i` transition delays, so they don't
+need their own observers.
+
+**Where.** `#btnMap` is a real link, retargeted for iOS in `app.js` the
+same way the calendar button is: `maps.apple.com` opens Apple Maps on
+iOS and a web map elsewhere, while the default Google URL opens the
+Google Maps app on Android. The letter itself now names the hotel only —
+the full street address lives here, so the two aren't saying the same
+thing twice.
+
+**RSVP.** The actions moved out of the letter onto their own closing
+card. The hairline rule that used to open them is dropped, since the
+card's own heading and flourish already do that job.
+
+## Gold foil ornament
+
+The ornaments are hand-authored SVG in a sprite at the top of
+`index.html` (`#ornCorner`, `#ornFlourish`, `#ornEdge`) rather than
+imported artwork — the line weight then matches the rest of the piece,
+and there's no extra asset to load or licence. They draw in
+`currentColor`, which is what lets the same corner vine be stamped gold
+on the letter and blind-embossed on the envelope.
+
+- **The letter's border** is four corner vines (one symbol, mirrored by
+  CSS) plus a running vine at the centre of the top and bottom edges,
+  with `.letter-paper::after` supplying the rule that connects them — so
+  it reads as one continuous stamped frame rather than four ornaments
+  sharing a card.
+- **Section flourishes** sit under every insert-card heading.
+- **The envelope's emboss** is the same vine with *no colour at all*: a
+  highlight pressed up and a shadow pressed down, which is the whole of
+  how a real stationery die reads on uncoated stock.
+- **Light sweeps.** Foil catches light unevenly, so a narrow
+  `soft-light` gradient crosses the letter's frame once when it settles,
+  and an `overlay` glint crosses the wax seal twice after the envelope
+  turns over — which also pulls the eye to the thing the guest is meant
+  to press. Both are one-shot rather than looping; a loop would nag while
+  someone is trying to read.
+
 ## The closing signature block
 
 The three CTAs used to be three unrelated visual languages stacked up (a
@@ -356,8 +438,15 @@ extraction.
    `https://wedding-invitation-jh.vercel.app/`.
 4. **Couple photos** — drop 3 portrait photos into `/assets` as
    `photo-1.webp` / `photo-2.webp` / `photo-3.webp` (see "Couple photos"
-   above). Until they're added, the frames still drop in on cue, just
-   showing a broken-image icon in the meantime.
+   above). Until they're added, each frame shows an empty ivory plate.
+5. **The running order** — the five entries on the "The day" card are
+   placeholders (marked with a `TODO Hennes` comment in `index.html`).
+6. **The dress code** — the copy, the six swatches and the reserved-colour
+   note are placeholders too, same comment marker.
+7. **The countdown target** — `WEDDING_AT` in `app.js` assumes lunch at
+   **12:00 Hong Kong time**. Adjust if the ceremony starts elsewhere in
+   the day; `assets/wedding-event.ics` is an all-day event and doesn't
+   need to match.
 
 ## Testing checklist
 
@@ -378,5 +467,10 @@ extraction.
 - Scroll past the calendar mid-sequence: it finishes immediately, collapses cleanly (no gap), and the page does **not** jump under you
 - Replaying resets every page to its untorn stacked state, clears any morph clone, and runs correctly a second time
 - No snowflakes before the envelope is opened; a fresh set appears once the letter rises, drifts rather than falling straight, stays faint, and never blocks taps; replaying clears them; none appear at all under `prefers-reduced-motion: reduce`
+- The calendar pad tears only on a horizontal flick or a tap — a vertical drag on it still scrolls the page, and a half-swipe under 34px drops the page back rather than tearing
+- December is never torn away; the payoff runs on its own once the eleventh page is gone
+- The calendar card stays compact while tearing and opens only when the dates appear
+- The countdown ticks, and its numerals don't jitter as digits change
+- "Open in Maps" resolves to `maps.apple.com` on iOS and the Google Maps URL elsewhere
 - With a photo missing, its frame shows an empty ivory plate — never a broken-image icon or stray alt text
 - Throttle the network so the webfonts land late: the letter must not end up clipped or trailing an empty gap

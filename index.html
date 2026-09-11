@@ -26,6 +26,69 @@
 </head>
 <body>
 
+<!-- Gold-foil ornament sprite. Hand-authored rather than imported art, so
+     the line weight matches the rest of the piece and there's no extra
+     asset to load. `currentColor` lets the same shapes be stamped gold on
+     the letter and embossed white-on-white on the envelope. -->
+<svg class="orn-sprite" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+
+    <!-- A corner vine: a quarter-arc stem with a curl at each end, two
+         leaves, and a five-petal bloom at the elbow. Drawn for the
+         top-left corner; the other three are mirrored in CSS. -->
+    <symbol id="ornCorner" viewBox="0 0 110 110">
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="M10 70C10 36 36 10 70 10" stroke-width="1.4"/>
+        <path d="M22 70C22 44 44 22 70 22" stroke-width="0.85" opacity="0.65"/>
+        <path d="M10 70C3 76 5 85 13 85C19 85 20 78 15 76" stroke-width="1.2"/>
+        <path d="M70 10C76 3 85 5 85 13C85 19 78 20 76 15" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" opacity="0.9">
+        <path d="M0 0C6 -6 16 -6 20 0C16 6 6 6 0 0Z" transform="translate(14.6 46.3) rotate(40)"/>
+        <path d="M0 0C6 -6 16 -6 20 0C16 6 6 6 0 0Z" transform="translate(46.3 14.6) rotate(50)"/>
+      </g>
+      <g fill="currentColor" transform="translate(27.25 27.25)">
+        <circle cx="0" cy="-7" r="4.4"/>
+        <circle cx="6.66" cy="-2.16" r="4.4"/>
+        <circle cx="4.11" cy="5.66" r="4.4"/>
+        <circle cx="-4.11" cy="5.66" r="4.4"/>
+        <circle cx="-6.66" cy="-2.16" r="4.4"/>
+      </g>
+      <circle cx="27.25" cy="27.25" r="2.1" fill="var(--paper)"/>
+    </symbol>
+
+    <!-- Divider flourish, sits under every section heading. -->
+    <symbol id="ornFlourish" viewBox="0 0 160 20">
+      <g fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round">
+        <path d="M6 10H58"/>
+        <path d="M102 10H154"/>
+        <path d="M58 10C65 10 67 4.5 72.5 4.5C76.5 4.5 79 7.5 80 10"/>
+        <path d="M102 10C95 10 93 15.5 87.5 15.5C83.5 15.5 81 12.5 80 10"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="80" cy="10" r="2.5"/>
+        <circle cx="64" cy="10" r="1.2"/>
+        <circle cx="96" cy="10" r="1.2"/>
+      </g>
+    </symbol>
+
+    <!-- A running vine for the middle of the letter's top and bottom edges,
+         so the border reads as continuous rather than four loose corners. -->
+    <symbol id="ornEdge" viewBox="0 0 120 16">
+      <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+        <path d="M3 8C14 8 17 3 25 3C32 3 35 6 42 8C49 10 52 13 59 13"/>
+        <path d="M117 8C106 8 103 3 95 3C88 3 85 6 78 8C71 10 68 13 61 13"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="60" cy="13" r="2.1"/>
+        <circle cx="25" cy="3" r="1.4"/>
+        <circle cx="95" cy="3" r="1.4"/>
+      </g>
+    </symbol>
+
+  </defs>
+</svg>
+
 <div class="snowfall" id="snowfall" aria-hidden="true"></div>
 
 <main class="page" id="page">
@@ -41,6 +104,15 @@
           <!-- FRONT -->
           <button type="button" class="face front" id="envelopeFront" aria-label="Tap to open your invitation">
             <span class="paper-texture" aria-hidden="true"></span>
+            <!-- Same vine as the letter's gold border, but blind-embossed:
+                 no colour at all, just a highlight above and a shadow
+                 below, the way a real stationery die presses paper. -->
+            <span class="emboss-frame" aria-hidden="true">
+              <svg class="emboss-corner emboss-tl"><use href="#ornCorner"/></svg>
+              <svg class="emboss-corner emboss-tr"><use href="#ornCorner"/></svg>
+              <svg class="emboss-corner emboss-bl"><use href="#ornCorner"/></svg>
+              <svg class="emboss-corner emboss-br"><use href="#ornCorner"/></svg>
+            </span>
             <span class="front-address">
               <span class="to-label">To,</span>
               <span class="guest-name" id="guestName">For you.</span>
@@ -63,6 +135,7 @@
               <img class="seal-img frag frag-left" id="fragLeft" src="/assets/seal-frag-left.webp" alt="" draggable="false">
               <img class="seal-img frag frag-bottom" id="fragBottom" src="/assets/seal-frag-bottom.webp" alt="" draggable="false">
               <img class="seal-img frag frag-right" id="fragRight" src="/assets/seal-frag-right.webp" alt="" draggable="false">
+              <span class="seal-shine" aria-hidden="true"></span>
             </button>
           </div>
 
@@ -73,6 +146,16 @@
     <!-- LETTER -->
     <article class="letter" id="letter" aria-hidden="true">
       <div class="letter-paper" id="letterPaper">
+
+        <div class="foil-frame" id="foilFrame" aria-hidden="true">
+          <svg class="foil-corner foil-tl"><use href="#ornCorner"/></svg>
+          <svg class="foil-corner foil-tr"><use href="#ornCorner"/></svg>
+          <svg class="foil-corner foil-bl"><use href="#ornCorner"/></svg>
+          <svg class="foil-corner foil-br"><use href="#ornCorner"/></svg>
+          <svg class="foil-edge foil-edge-top"><use href="#ornEdge"/></svg>
+          <svg class="foil-edge foil-edge-bottom"><use href="#ornEdge"/></svg>
+          <span class="foil-shine"></span>
+        </div>
 
         <p class="reveal-item eyebrow" data-reveal="0">KEEP CHRISTMAS DAY FOR US.</p>
 
@@ -92,7 +175,8 @@
 
         <div class="reveal-item calendar-intro" data-reveal="5" id="calendarIntro" aria-hidden="true">
           <div class="mini-calendar">
-            <div class="cal-pad" id="calPad" aria-hidden="true">
+            <div class="cal-pad" id="calPad" role="button" tabindex="0"
+                 aria-label="Tear the months off the calendar, one at a time, to reach the wedding date">
               <div class="cal-page" data-m="1"><span>JAN</span></div>
               <div class="cal-page" data-m="2"><span>FEB</span></div>
               <div class="cal-page" data-m="3"><span>MAR</span></div>
@@ -106,6 +190,7 @@
               <div class="cal-page" data-m="11"><span>NOV</span></div>
               <div class="cal-page cal-page-final" data-m="12"><span>DEC</span></div>
             </div>
+            <p class="cal-hint" id="calHint" aria-hidden="true">swipe to tear</p>
             <p class="mini-cal-year">2027</p>
             <div class="mini-cal-grid">
               <span class="mini-cal-dow">S</span><span class="mini-cal-dow">M</span><span class="mini-cal-dow">T</span><span class="mini-cal-dow">W</span><span class="mini-cal-dow">T</span><span class="mini-cal-dow">F</span><span class="mini-cal-dow">S</span>
@@ -132,9 +217,8 @@
         </p>
 
         <p class="venue reveal-item" data-reveal="8">
-          Kimpton Tsim Sha Tsui Hong Kong<br>
-          11 Middle Road, Tsim Sha Tsui<br>
-          Kowloon, Hong Kong
+          Kimpton Tsim Sha Tsui<br>
+          Hong Kong
         </p>
 
         <figure class="reveal-item photo-block photo-2" data-reveal="9">
@@ -161,15 +245,80 @@
           Jessica &amp; Hennes
         </p>
 
-        <div class="actions reveal-item" data-reveal="14">
+      </div>
+
+      <!-- The practical details travel as separate insert cards, the way a
+           real invitation suite ships a details card, a map card and a
+           reply card tucked behind the main one. -->
+
+      <section class="insert-card reveal-item" data-reveal="14" aria-labelledby="hCountdown">
+        <h2 class="insert-head" id="hCountdown">The celebration begins in</h2>
+        <svg class="insert-flourish" aria-hidden="true"><use href="#ornFlourish"/></svg>
+        <div class="countdown" id="countdown">
+          <div class="cd-unit"><span class="cd-num" id="cdDays">—</span><span class="cd-label">Days</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cdHours">—</span><span class="cd-label">Hours</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cdMins">—</span><span class="cd-label">Minutes</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cdSecs">—</span><span class="cd-label">Seconds</span></div>
+        </div>
+      </section>
+
+      <!-- TODO Hennes: placeholder running order — swap for the real one. -->
+      <section class="insert-card reveal-item" data-reveal="15" aria-labelledby="hTimeline">
+        <h2 class="insert-head" id="hTimeline">The day</h2>
+        <svg class="insert-flourish" aria-hidden="true"><use href="#ornFlourish"/></svg>
+        <ol class="timeline">
+          <li class="tl-row" style="--i:0"><span class="tl-time">11:30</span><span class="tl-event">Guests arrive &amp; welcome drinks</span></li>
+          <li class="tl-row" style="--i:1"><span class="tl-time">12:15</span><span class="tl-event">Ceremony</span></li>
+          <li class="tl-row" style="--i:2"><span class="tl-time">13:00</span><span class="tl-event">Christmas lunch is served</span></li>
+          <li class="tl-row" style="--i:3"><span class="tl-time">15:00</span><span class="tl-event">Speeches &amp; cake</span></li>
+          <li class="tl-row" style="--i:4"><span class="tl-time">16:00</span><span class="tl-event">Photographs &amp; farewells</span></li>
+        </ol>
+      </section>
+
+      <section class="insert-card reveal-item" data-reveal="16" aria-labelledby="hLocation">
+        <h2 class="insert-head" id="hLocation">Where</h2>
+        <svg class="insert-flourish" aria-hidden="true"><use href="#ornFlourish"/></svg>
+        <p class="loc-city">HONG KONG</p>
+        <p class="loc-venue">Kimpton Tsim Sha Tsui Hong Kong</p>
+        <p class="loc-address">
+          11 Middle Road, Tsim Sha Tsui<br>
+          Kowloon, Hong Kong
+        </p>
+        <a class="btn btn-map" id="btnMap" href="https://www.google.com/maps/search/?api=1&amp;query=Kimpton%20Tsim%20Sha%20Tsui%20Hong%20Kong%2C%2011%20Middle%20Road%2C%20Tsim%20Sha%20Tsui%2C%20Kowloon%2C%20Hong%20Kong" target="_blank" rel="noopener">Open in Maps</a>
+      </section>
+
+      <!-- TODO Hennes: placeholder dress code and palette — swap for the real one. -->
+      <section class="insert-card reveal-item" data-reveal="17" aria-labelledby="hDress">
+        <h2 class="insert-head" id="hDress">Dress code</h2>
+        <svg class="insert-flourish" aria-hidden="true"><use href="#ornFlourish"/></svg>
+        <p class="dress-copy">
+          Festive formal, in warm winter tones —<br>
+          it&rsquo;s Christmas Day, so do dress up.
+        </p>
+        <p class="dress-label">Suggested shades</p>
+        <ul class="swatches">
+          <li class="swatch" style="--sw:#E8D9C0" title="Champagne"><span class="sr-only">Champagne</span></li>
+          <li class="swatch" style="--sw:#C2A05A" title="Antique gold"><span class="sr-only">Antique gold</span></li>
+          <li class="swatch" style="--sw:#B98C7A" title="Warm clay"><span class="sr-only">Warm clay</span></li>
+          <li class="swatch" style="--sw:#8C4A4A" title="Wine"><span class="sr-only">Wine</span></li>
+          <li class="swatch" style="--sw:#6E6257" title="Smoke"><span class="sr-only">Smoke</span></li>
+          <li class="swatch" style="--sw:#3E3833" title="Charcoal"><span class="sr-only">Charcoal</span></li>
+        </ul>
+        <p class="dress-note">Please leave ivory and white to the bride.</p>
+      </section>
+
+      <section class="insert-card insert-rsvp reveal-item" data-reveal="18" aria-labelledby="hRsvp">
+        <h2 class="insert-head" id="hRsvp">Will you be there?</h2>
+        <svg class="insert-flourish" aria-hidden="true"><use href="#ornFlourish"/></svg>
+        <div class="actions">
           <button type="button" class="btn btn-primary" id="btnYes">I&rsquo;ll be there</button>
           <button type="button" class="btn btn-secondary" id="btnNo">I can&rsquo;t make it</button>
           <a class="btn-calendar" id="btnCalendar" href="/assets/wedding-event.ics" download="jessica-hennes-wedding.ics">+ Add to calendar</a>
         </div>
+      </section>
 
-        <button type="button" class="replay-btn" id="replayBtn" aria-label="Replay the invitation">Replay</button>
+      <button type="button" class="replay-btn" id="replayBtn" aria-label="Replay the invitation">Replay</button>
 
-      </div>
     </article>
 
   </div>
