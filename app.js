@@ -21,13 +21,10 @@
   // hosted file rather than something generated client-side.
   const ICS_PATH = "/assets/wedding-event.ics";
 
-  const SEAL_ASSETS = [
-    "/assets/seal-full.webp",
-    "/assets/seal-cracked.webp",
-    "/assets/seal-frag-left.webp",
-    "/assets/seal-frag-bottom.webp",
-    "/assets/seal-frag-right.webp"
-  ];
+  // Only the intact seal is used now. The cracked and fragment artwork
+  // is still in /assets but is deliberately never shown — see the "Wax
+  // seal" section of README.md.
+  const SEAL_ASSETS = ["/assets/seal-full.webp"];
 
   const PHOTO_ASSETS = [
     "/assets/photo-1.webp",
@@ -39,13 +36,14 @@
   // matched to the creative brief. The letter's own content no longer
   // reveals on a timer (see "Scroll reveal" below): it reveals as the
   // guest scrolls to it.
+  // Nothing here breaks the seal. It is pressed, the wax releases from
+  // the paper whole, the gold pass crosses the embossing, and only then
+  // does the flap lift — carrying the intact seal away with it.
   const T = {
     pressed: 0,
-    cracked: 160,
-    broken: 620,
-    falling: 700,
-    flapOpen: 1100,
-    letterRise: 1780
+    release: 190, // the wax comes away from the paper, in one piece
+    flapOpen: 1150, // after the gold sweep has finished crossing the face
+    letterRise: 1900
   };
 
   // The extraction beat, measured from the moment the letter starts to
@@ -246,23 +244,18 @@
     const at = (ms) => Math.round(ms * scale);
 
     sealBtn.dataset.pressed = "true";
+    // Drives the one gold moment in the piece: the sweep across the
+    // embossing and the glint across the wax both hang off this.
+    flipCard.dataset.opening = "true";
 
-    clock.after(at(T.cracked), () => {
-      scene.dataset.seal = "cracked";
+    clock.after(at(T.release), () => {
+      scene.dataset.seal = "lifting";
       sealBtn.dataset.pressed = "false";
-    });
-
-    clock.after(at(T.broken), () => {
-      scene.dataset.seal = "broken";
-    });
-
-    clock.after(at(T.falling), () => {
-      scene.dataset.seal = "falling";
     });
 
     clock.after(at(T.flapOpen), () => {
       flipCard.dataset.flap = "open";
-      announce("The envelope is opening.");
+      announce("The seal lifts and the envelope opens.");
     });
 
     clock.after(at(T.letterRise), () => {
@@ -698,6 +691,7 @@
 
     flipCard.dataset.flipped = "false";
     flipCard.dataset.flap = "closed";
+    delete flipCard.dataset.opening;
     scene.dataset.seal = "full";
     sealBtn.dataset.pressed = "false";
     sealBtn.disabled = false;

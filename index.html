@@ -175,12 +175,6 @@
               <svg class="emboss-corner emboss-bl"><use href="#ornCorner"/></svg>
               <svg class="emboss-corner emboss-br"><use href="#ornCorner"/></svg>
             </span>
-            <span class="gold-pass gold-pass-front" aria-hidden="true">
-              <svg class="emboss-corner emboss-tl"><use href="#ornCorner"/></svg>
-              <svg class="emboss-corner emboss-tr"><use href="#ornCorner"/></svg>
-              <svg class="emboss-corner emboss-bl"><use href="#ornCorner"/></svg>
-              <svg class="emboss-corner emboss-br"><use href="#ornCorner"/></svg>
-            </span>
             <span class="front-address">
               <span class="to-label">To,</span>
               <span class="guest-name" id="guestName">For you.</span>
@@ -218,14 +212,18 @@
               <span class="gp gp-bottom"><svg><use href="#ornSpray"/></svg></span>
             </span>
 
-            <button type="button" class="seal-btn" id="sealBtn" aria-label="Break the wax seal to open your invitation">
-              <img class="seal-img seal-full" id="sealFull" src="/assets/seal-full.webp" alt="" draggable="false">
-              <img class="seal-img seal-cracked" id="sealCracked" src="/assets/seal-cracked.webp" alt="" draggable="false">
-              <img class="seal-img frag frag-left" id="fragLeft" src="/assets/seal-frag-left.webp" alt="" draggable="false">
-              <img class="seal-img frag frag-bottom" id="fragBottom" src="/assets/seal-frag-bottom.webp" alt="" draggable="false">
-              <img class="seal-img frag frag-right" id="fragRight" src="/assets/seal-frag-right.webp" alt="" draggable="false">
-              <span class="seal-shine" aria-hidden="true"></span>
-            </button>
+            <!-- The seal rides on the flap rather than sitting on the
+                 face, so it lifts away whole when the envelope opens.
+                 Nothing here cracks or breaks: a broken seal is a bad
+                 omen to hand someone on their wedding invitation. The
+                 carrier shares the flap's hinge and rotation, which is
+                 what glues the wax to the flap it is sealing. -->
+            <div class="seal-carrier" id="sealCarrier">
+              <button type="button" class="seal-btn" id="sealBtn" aria-label="Open the wax seal and lift the flap">
+                <img class="seal-img seal-full" id="sealFull" src="/assets/seal-full.webp" alt="" draggable="false">
+                <span class="seal-shine" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
 
         </div>

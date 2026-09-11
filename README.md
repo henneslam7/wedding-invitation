@@ -23,11 +23,11 @@ app.js          guest-name/side parsing, seal/flip/reveal sequencing,
                  WhatsApp CTAs, add-to-calendar
 assets/
   favicon.svg            simplified J·H monogram
-  seal-full.webp         realistic intact wax seal
-  seal-cracked.webp      same seal, cracked
-  seal-frag-left.webp    left fragment (contains J)
-  seal-frag-bottom.webp  bottom curved fragment
-  seal-frag-right.webp   right fragment (contains H)
+  seal-full.webp         realistic intact wax seal — the only one used
+  seal-cracked.webp      RETIRED (see "The wax is never broken")
+  seal-frag-left.webp    RETIRED
+  seal-frag-bottom.webp  RETIRED
+  seal-frag-right.webp   RETIRED
   og-preview.jpg         1200×630 WhatsApp link-preview image
   wedding-event.ics      static calendar file used by "+ Add to calendar"
   photo-1.webp           TODO — portrait couple photo (set into the letter)
@@ -128,7 +128,39 @@ invitation should never show.
 
 ## Opening the envelope
 
-The seal breaks, the flap folds back, and then the letter is **drawn up
+### The wax is never broken
+
+The seal does **not** crack, split, or shed fragments. Handing someone a
+broken seal on a wedding invitation is a bad omen, and no animation is
+worth that — so the wax releases from the paper **whole** and leaves
+still attached to the flap it was sealing.
+
+`.seal-carrier` is a sibling of `.flap` that shares its hinge
+(`transform-origin: 50% 0%`), its rotation, and — critically — its exact
+duration and curve. Any difference between the two and the wax visibly
+slides against the paper it is supposed to be stuck to. It can't simply
+live *inside* `.flap`, because the flap is clipped to a triangle and
+would cut the round seal in half at its point.
+
+The flap has its own easing, `--ease-flap`. `--ease-paper` is heavily
+front-loaded, which is right for a page being torn but wrong here: it
+threw the flap edge-on within about 170ms, so the seal was gone before
+anyone could see that it left in one piece. A gentler curve over 1400ms
+keeps the seal at full size and full opacity for the first ~450ms of the
+rotation, which is the entire point of the change. It fades only once
+it turns edge-on and passes the hinge — `.back` clips everything above
+the top edge, and a seal that hard-cuts against that line looks severed,
+which is exactly the impression being avoided.
+
+The state machine lost `cracked` / `broken` / `falling`; there is now
+just `full` → `lifting`, where `lifting` is a small scale-up and a
+deepened drop shadow — the wax coming away from the paper in one piece.
+The cracked and fragment artwork stays in `/assets` (nothing is deleted)
+but is never referenced or preloaded.
+
+### Coming out of the envelope
+
+The seal lifts, the flap folds back, and then the letter is **drawn up
 out of the envelope** rather than cross-faded on top of it.
 
 The trick is z-order, not clipping: `.letter` sits at `z-index: 1`,
@@ -432,10 +464,19 @@ on the letter and blind-embossed on the envelope.
 
 ### The gold pass
 
-When the card turns over, a band of light travels left to right across
-the whole face: each spray flares gold as the band reaches it and dims
-again behind it, and the wax seal glints in the same pass. The front
-gets the same treatment shortly after the invitation arrives.
+The gold belongs to **one moment only: the instant the seal is opened.**
+A band of light travels left to right across the whole face — each spray
+flares gold as the band reaches it and dims again behind it, and the wax
+seal glints in the same pass.
+
+It previously fired twice more, on arrival and again on the turn, which
+spent the effect before the beat it was for. Nothing is gold until the
+guest presses the seal; the front is blind-embossed only, which is the
+correct treatment for an addressed envelope anyway.
+
+The whole sweep finishes *before* the flap lifts (`T.flapOpen` is set
+after it). The flap carries its own spray away with it, so gold left
+burning in the flap zone would be sitting on nothing.
 
 It's a **gold re-stamp of the same ornament behind a moving mask**, not
 a fade — a `linear-gradient` mask at 240% width, soft-edged on both
@@ -456,12 +497,9 @@ if it's ever touched again:
   sits on top of it, so the gold belongs at `z-index: 4` — under the
   seal, over the flap. `.gp-flapzone` re-applies the flap's own
   `clip-path` so the gold stamp stops exactly where the embossed one does.
-- **Light sweeps.** Foil catches light unevenly, so a narrow
-  `soft-light` gradient crosses the letter's frame once when it settles,
-  and an `overlay` glint crosses the wax seal twice after the envelope
-  turns over — which also pulls the eye to the thing the guest is meant
-  to press. Both are one-shot rather than looping; a loop would nag while
-  someone is trying to read.
+**The letter's own sweep** is separate: a narrow `soft-light` gradient
+crosses its gold frame once when it settles. One-shot, like everything
+else here — a loop would nag while someone is trying to read.
 
 ## The closing signature block
 
@@ -522,7 +560,8 @@ extraction.
 - A link with no `&side=` (or an unrecognised one) falls back to the copy-to-clipboard flow instead of guessing
 - 320px, 390px, 430px, and desktop viewports
 - Flip only triggers once per active sequence; seal is tappable right after flip
-- Cracked seal is visible before the fragments appear; all 3 fragments move independently
+- **Nothing gold happens until the seal is pressed** — not on arrival, not on the turn
+- **The seal never cracks or sheds fragments.** It lifts whole, stays legible while the flap carries it back, and only fades once it turns edge-on past the hinge
 - Flap opens only after the fragments have left; letter is never clipped; bottom buttons stay visible
 - Replay fully resets state; `prefers-reduced-motion: reduce` still reaches a readable end state
 - No guest name on the envelope back; no date on the envelope front
